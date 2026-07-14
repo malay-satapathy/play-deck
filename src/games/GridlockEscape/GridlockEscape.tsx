@@ -1,190 +1,287 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import BackButton from '../../core/components/BackButton';
 import { useGlobalState } from '../../core/store/GlobalContext';
 import styles from './GridlockEscape.module.css';
 
-const GridlockEscape: React.FC = () => {
-  const [level, setLevel] = useState(1);
-  const GRID_SIZE = 2 + level; // Level 1 is 3x3, Level 2 is 4x4, etc.
-  const TOTAL_TILES = GRID_SIZE * GRID_SIZE;
+interface Block {
+  id: string;
+  x: number;
+  y: number;
+  len: number;
+  dir: 'h' | 'v';
+  isRed: boolean;
+  color: string;
+}
 
-  const [player, setPlayer] = useState({ x: 0, y: 0 });
-  const [visited, setVisited] = useState<Set<string>>(new Set(['0,0']));
-  const [gameOver, setGameOver] = useState(false);
+const LEVEL_1: Block[] = [
+  { id: 'red', x: 1, y: 2, len: 2, dir: 'h', isRed: true, color: '#ef4444' }, 
+  { id: '1', x: 0, y: 0, len: 2, dir: 'v', isRed: false, color: '#10b981' },
+  { id: '2', x: 1, y: 0, len: 2, dir: 'h', isRed: false, color: '#f59e0b' },
+  { id: '3', x: 4, y: 0, len: 3, dir: 'v', isRed: false, color: '#3b82f6' },
+  { id: '4', x: 1, y: 3, len: 3, dir: 'h', isRed: false, color: '#8b5cf6' },
+  { id: '5', x: 4, y: 4, len: 2, dir: 'h', isRed: false, color: '#ec4899' },
+];
+
+const LEVEL_2: Block[] = [
+  { id: 'red', x: 0, y: 2, len: 2, dir: 'h', isRed: true, color: '#ef4444' }, 
+  { id: '1', x: 0, y: 0, len: 2, dir: 'h', isRed: false, color: '#10b981' },
+  { id: '2', x: 2, y: 0, len: 3, dir: 'v', isRed: false, color: '#f59e0b' },
+  { id: '3', x: 0, y: 3, len: 2, dir: 'v', isRed: false, color: '#3b82f6' },
+  { id: '4', x: 2, y: 4, len: 2, dir: 'h', isRed: false, color: '#8b5cf6' },
+  { id: '5', x: 5, y: 1, len: 3, dir: 'v', isRed: false, color: '#ec4899' },
+  { id: '6', x: 4, y: 5, len: 2, dir: 'h', isRed: false, color: '#14b8a6' },
+];
+
+const LEVEL_3: Block[] = [
+  { id: 'red', x: 1, y: 2, len: 2, dir: 'h', isRed: true, color: '#ef4444' },
+  { id: '1', x: 0, y: 0, len: 3, dir: 'v', isRed: false, color: '#10b981' },
+  { id: '2', x: 1, y: 0, len: 2, dir: 'v', isRed: false, color: '#f59e0b' },
+  { id: '3', x: 3, y: 0, len: 2, dir: 'h', isRed: false, color: '#3b82f6' },
+  { id: '4', x: 5, y: 0, len: 3, dir: 'v', isRed: false, color: '#8b5cf6' },
+  { id: '5', x: 3, y: 1, len: 2, dir: 'v', isRed: false, color: '#ec4899' },
+  { id: '6', x: 3, y: 3, len: 2, dir: 'h', isRed: false, color: '#14b8a6' },
+  { id: '7', x: 1, y: 4, len: 2, dir: 'h', isRed: false, color: '#f97316' },
+  { id: '8', x: 3, y: 4, len: 2, dir: 'v', isRed: false, color: '#0ea5e9' },
+  { id: '9', x: 0, y: 5, len: 3, dir: 'h', isRed: false, color: '#84cc16' },
+];
+
+const LEVELS = [LEVEL_1, LEVEL_2, LEVEL_3];
+
+const isOccupied = (blocks: Block[], cx: number, cy: number, ignoreId: string) => {
+  for (let b of blocks) {
+      if (b.id === ignoreId) continue;
+      if (b.dir === 'h') {
+          if (cy === b.y && cx >= b.x && cx < b.x + b.len) return true;
+      } else {
+          if (cx === b.x && cy >= b.y && cy < b.y + b.len) return true;
+      }
+  }
+  return false;
+};
+
+const GridlockEscape: React.FC = () => {
+  const [level, setLevel] = useState(0);
+  const [blocks, setBlocks] = useState<Block[]>(LEVELS[0]);
+  const [moves, setMoves] = useState(0);
   const [win, setWin] = useState(false);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(5 + level * 5); // Base 5s + 5s per level
+  const [boardSize, setBoardSize] = useState(300);
+  const [isDragging, setIsDragging] = useState(false);
   
+  const boardRef = useRef<HTMLDivElement>(null);
   const { addXp } = useGlobalState();
+  
+  const dragRef = useRef<{ 
+    id: string, 
+    startX: number, 
+    startY: number, 
+    minDiff: number, 
+    maxDiff: number, 
+    currentDiff: number 
+  } | null>(null);
 
-  // Timer logic
   useEffect(() => {
-    if (gameOver || win) return;
-    if (timeLeft <= 0) {
-      setGameOver(true);
-      return;
-    }
-    const timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
-    return () => clearInterval(timer);
-  }, [timeLeft, gameOver, win]);
+    const updateSize = () => {
+        if (boardRef.current) {
+            setBoardSize(boardRef.current.clientWidth);
+        }
+    };
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
 
   const handleWin = useCallback(() => {
     setWin(true);
-    setGameOver(true);
-    // Score based on grid size and remaining time
-    const earnedScore = (level * 20) + (timeLeft * 5);
-    setScore(s => s + earnedScore);
-    addXp(Math.floor(earnedScore / 2));
-  }, [level, timeLeft, addXp]);
+    const earnedScore = (level + 1) * 100 - (moves * 2);
+    const finalScore = Math.max(10, earnedScore);
+    setScore(s => s + finalScore);
+    addXp(Math.floor(finalScore / 2));
+  }, [level, moves, addXp]);
 
-  const handleLose = useCallback(() => {
-    setGameOver(true);
-  }, []);
-
-  const move = useCallback((dx: number, dy: number) => {
-    if (gameOver) return;
+  const onPointerDown = (e: React.PointerEvent, block: Block) => {
+    if (win) return;
+    e.preventDefault();
+    const el = e.currentTarget as HTMLDivElement;
+    el.setPointerCapture(e.pointerId);
     
-    setPlayer(p => {
-      const nx = p.x + dx;
-      const ny = p.y + dy;
-      
-      if (nx < 0 || nx >= GRID_SIZE || ny < 0 || ny >= GRID_SIZE) return p;
-      const key = `${nx},${ny}`;
-      if (visited.has(key)) return p; // Cannot step on visited tile
-      
-      setVisited(v => {
-        const nextV = new Set(v).add(key);
-        // Check win condition: exit is bottom right and all tiles visited
-        if (nx === GRID_SIZE - 1 && ny === GRID_SIZE - 1) {
-          if (nextV.size === TOTAL_TILES) {
-            handleWin();
-          } else {
-            handleLose(); // Reached exit too early
-          }
-        } else {
-          // Check if trapped
-          const moves = [
-            [0, 1], [0, -1], [1, 0], [-1, 0]
-          ];
-          let canMove = false;
-          for (let m of moves) {
-            const mx = nx + m[0];
-            const my = ny + m[1];
-            if (mx >= 0 && mx < GRID_SIZE && my >= 0 && my < GRID_SIZE && !nextV.has(`${mx},${my}`)) {
-              canMove = true;
-              break;
-            }
-          }
-          if (!canMove) {
-            handleLose();
-          }
+    let minDiff = 0;
+    let maxDiff = 0;
+    
+    if (block.dir === 'h') {
+        for (let i = block.x - 1; i >= 0; i--) {
+            if (isOccupied(blocks, i, block.y, block.id)) break;
+            minDiff--;
         }
-        return nextV;
-      });
-      
-      return { x: nx, y: ny };
-    });
-  }, [gameOver, visited, GRID_SIZE, TOTAL_TILES, handleWin, handleLose]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      switch(e.key) {
-        case 'ArrowUp': move(0, -1); break;
-        case 'ArrowDown': move(0, 1); break;
-        case 'ArrowLeft': move(-1, 0); break;
-        case 'ArrowRight': move(1, 0); break;
-      }
+        for (let i = block.x + block.len; i < 6; i++) {
+            if (isOccupied(blocks, i, block.y, block.id)) break;
+            maxDiff++;
+        }
+    } else {
+        for (let i = block.y - 1; i >= 0; i--) {
+            if (isOccupied(blocks, block.x, i, block.id)) break;
+            minDiff--;
+        }
+        for (let i = block.y + block.len; i < 6; i++) {
+            if (isOccupied(blocks, block.x, i, block.id)) break;
+            maxDiff++;
+        }
+    }
+    
+    dragRef.current = {
+        id: block.id,
+        startX: e.clientX,
+        startY: e.clientY,
+        minDiff, 
+        maxDiff,
+        currentDiff: 0
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [move]);
+    setIsDragging(true);
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!dragRef.current) return;
+    const { id, startX, startY, minDiff, maxDiff } = dragRef.current;
+    const block = blocks.find(b => b.id === id);
+    if (!block) return;
+    
+    const cellSize = boardSize / 6;
+    let diffPx = block.dir === 'h' ? (e.clientX - startX) : (e.clientY - startY);
+    let diffCells = Math.round(diffPx / cellSize);
+    diffCells = Math.max(minDiff, Math.min(maxDiff, diffCells));
+    
+    dragRef.current.currentDiff = diffCells;
+    
+    const el = document.getElementById(`block-${id}`);
+    if (el) {
+       if (block.dir === 'h') {
+           el.style.transform = `translate(${(block.x + diffCells) * cellSize}px, ${block.y * cellSize}px)`;
+       } else {
+           el.style.transform = `translate(${block.x * cellSize}px, ${(block.y + diffCells) * cellSize}px)`;
+       }
+    }
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (!dragRef.current) return;
+    const el = e.currentTarget as HTMLDivElement;
+    el.releasePointerCapture(e.pointerId);
+    
+    const { id, currentDiff } = dragRef.current;
+    
+    if (currentDiff !== 0) {
+       let didWin = false;
+       setBlocks(prev => prev.map(b => {
+           if (b.id === id) {
+               const nx = b.dir === 'h' ? b.x + currentDiff : b.x;
+               const ny = b.dir === 'v' ? b.y + currentDiff : b.y;
+               if (b.isRed && nx + b.len === 6) didWin = true;
+               return { ...b, x: nx, y: ny };
+           }
+           return b;
+       }));
+       setMoves(m => m + 1);
+       if (didWin) handleWin();
+    } else {
+       // snap back
+       const block = blocks.find(b => b.id === id);
+       if (block) {
+         const cellSize = boardSize / 6;
+         el.style.transform = `translate(${block.x * cellSize}px, ${block.y * cellSize}px)`;
+       }
+    }
+    
+    dragRef.current = null;
+    setIsDragging(false);
+  };
 
   const restart = () => {
-    setLevel(1);
-    setPlayer({ x: 0, y: 0 });
-    setVisited(new Set(['0,0']));
-    setScore(0);
-    setTimeLeft(10); // Reset to base level 1 time
-    setGameOver(false);
+    setBlocks(LEVELS[level]);
+    setMoves(0);
     setWin(false);
   };
 
   const nextLevel = () => {
-    const nextLvl = level + 1;
+    const nextLvl = (level + 1) % LEVELS.length;
     setLevel(nextLvl);
-    setPlayer({ x: 0, y: 0 });
-    setVisited(new Set(['0,0']));
-    setTimeLeft(5 + nextLvl * 5);
-    setGameOver(false);
+    setBlocks(LEVELS[nextLvl]);
+    setMoves(0);
     setWin(false);
   };
+
+  const cellSize = boardSize / 6;
 
   return (
     <div className={styles.gameContainer}>
       <BackButton />
       
-      <div className={styles.gameBoard}>
+      <div className={styles.gameBoardContainer}>
         <div className={styles.header}>
-          <h2>Gridlock Escape: Level {level}</h2>
+          <h2>Gridlock Escape: Lvl {level + 1}</h2>
           <div className={styles.infoBar}>
-            <div className={styles.timer} style={{ color: timeLeft <= 5 ? '#ef4444' : '#f8fafc' }}>
-              Time: {timeLeft}s
-            </div>
+            <div className={styles.moves}>Moves: {moves}</div>
+            <button onClick={restart} style={{background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '1rem'}}>↻ Restart</button>
             <div className={styles.scoreBoard}>Score: {score}</div>
           </div>
         </div>
 
-        <div className={styles.grid}>
-          {Array.from({ length: GRID_SIZE }).map((_, y) => (
-            <div key={y} className={styles.row}>
-              {Array.from({ length: GRID_SIZE }).map((_, x) => {
-                const isPlayer = player.x === x && player.y === y;
-                const isExit = x === GRID_SIZE - 1 && y === GRID_SIZE - 1;
-                const isVisited = visited.has(`${x},${y}`);
-                
-                let cellClass = styles.cell;
-                if (isPlayer) cellClass += ` ${styles.player}`;
-                else if (isExit) cellClass += ` ${styles.exit}`;
-                else if (isVisited) cellClass += ` ${styles.visited}`;
-                
-                // Scale cell size down slightly as grid gets bigger
-                const cellSize = Math.max(30, 80 - (GRID_SIZE * 5));
+        <div className={styles.boardWrapper}>
+          <div 
+            className={styles.board} 
+            ref={boardRef}
+            style={{ height: boardSize }}
+          >
+            {/* Grid background lines */}
+            {Array.from({ length: 6 }).map((_, i) => (
+              <React.Fragment key={`grid-${i}`}>
+                <div className={styles.gridLineH} style={{ top: `${(i * 100) / 6}%` }} />
+                <div className={styles.gridLineV} style={{ left: `${(i * 100) / 6}%` }} />
+              </React.Fragment>
+            ))}
 
-                return (
-                  <div 
-                    key={`${x}-${y}`} 
-                    className={cellClass} 
-                    style={{ width: cellSize, height: cellSize }}
-                  />
-                );
-              })}
+            <div 
+              className={styles.exit} 
+              style={{ 
+                  top: 2 * cellSize,
+                  height: cellSize
+              }}
+            >
+              EXIT
             </div>
-          ))}
+
+            {blocks.map(b => {
+              const isBeingDragged = isDragging && dragRef.current?.id === b.id;
+              return (
+                <div 
+                  key={b.id}
+                  id={`block-${b.id}`}
+                  className={`${styles.block} ${b.isRed ? styles.redCar : ''}`}
+                  style={{
+                      width: b.dir === 'h' ? b.len * cellSize : cellSize,
+                      height: b.dir === 'v' ? b.len * cellSize : cellSize,
+                      transform: `translate(${b.x * cellSize}px, ${b.y * cellSize}px)`,
+                      backgroundColor: b.color,
+                      transition: isBeingDragged ? 'none' : 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)'
+                  }}
+                  onPointerDown={(e) => onPointerDown(e, b)}
+                  onPointerMove={onPointerMove}
+                  onPointerUp={onPointerUp}
+                  onPointerCancel={onPointerUp}
+                />
+              );
+            })}
+          </div>
         </div>
 
-        <div className={styles.dpad}>
-          <button className={`${styles.dpadBtn} ${styles.up}`} onClick={() => move(0, -1)}>↑</button>
-          <button className={`${styles.dpadBtn} ${styles.left}`} onClick={() => move(-1, 0)}>←</button>
-          <button className={`${styles.dpadBtn} ${styles.down}`} onClick={() => move(0, 1)}>↓</button>
-          <button className={`${styles.dpadBtn} ${styles.right}`} onClick={() => move(1, 0)}>→</button>
+        <div className={styles.controlsHelp}>
+          Drag the blocks. Red block must reach the EXIT.
         </div>
 
-        {gameOver && (
+        {win && (
           <div className={styles.gameOverOverlay}>
-            <h2 style={{ color: win ? '#10b981' : '#ef4444' }}>
-              {win ? 'Level Complete!' : (timeLeft <= 0 ? 'Time Up!' : 'Trapped!')}
-            </h2>
-            {win ? (
-              <>
-                <p>Time bonus applied!</p>
-                <button onClick={nextLevel} className={styles.nextBtn}>Next Level</button>
-              </>
-            ) : (
-              <>
-                <p>Final Score: {score}</p>
-                <button onClick={restart} className={styles.restartBtn}>Play Again</button>
-              </>
-            )}
+            <h2 style={{ color: '#10b981' }}>Escaped!</h2>
+            <p>Moves: {moves}</p>
+            <button onClick={nextLevel} className={styles.nextBtn}>Next Level</button>
           </div>
         )}
       </div>
