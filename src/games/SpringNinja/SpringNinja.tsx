@@ -61,21 +61,21 @@ const SpringNinja: React.FC = () => {
     setGameOver(false);
   }, []);
 
-  const update = useCallback(() => {
+  const update = useCallback((dt: number) => {
     if (gameOver) return;
     const state = gameState.current;
 
     // Movement
-    if (state.keys.left) state.player.x -= MOVE_SPEED;
-    if (state.keys.right) state.player.x += MOVE_SPEED;
+    if (state.keys.left) state.player.x -= MOVE_SPEED * dt;
+    if (state.keys.right) state.player.x += MOVE_SPEED * dt;
 
     // Wrap horizontally
     if (state.player.x < -state.player.w) state.player.x = CANVAS_WIDTH;
     if (state.player.x > CANVAS_WIDTH) state.player.x = -state.player.w;
 
     // Physics
-    state.player.vy += GRAVITY;
-    state.player.y += state.player.vy;
+    state.player.vy += GRAVITY * dt;
+    state.player.y += state.player.vy * dt;
 
     // Collision (only when falling)
     if (state.player.vy > 0) {
@@ -157,14 +157,21 @@ const SpringNinja: React.FC = () => {
 
   }, []);
 
-  const loop = useCallback(() => {
+  const lastTimeRef = useRef<number>(performance.now());
+
+  const loop = useCallback((timestamp: number) => {
     if (!gameOver) {
-      update();
+      const dt = (timestamp - lastTimeRef.current) / 16.666;
+      lastTimeRef.current = timestamp;
+
+      update(dt);
       const canvas = canvasRef.current;
       if (canvas) {
         const ctx = canvas.getContext('2d');
         if (ctx) draw(ctx);
       }
+    } else {
+      lastTimeRef.current = timestamp;
     }
     requestRef.current = requestAnimationFrame(loop);
   }, [update, draw, gameOver]);

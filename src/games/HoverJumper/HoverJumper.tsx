@@ -34,15 +34,15 @@ const HoverJumper: React.FC = () => {
     gameState.current.bird.vy = JUMP;
   }, [gameOver, gameStarted]);
 
-  const update = useCallback(() => {
+  const update = useCallback((dt: number) => {
     if (!gameStarted || gameOver) return;
     
     const state = gameState.current;
-    frames.current++;
+    frames.current += dt;
 
     // Bird physics
-    state.bird.vy += GRAVITY;
-    state.bird.y += state.bird.vy;
+    state.bird.vy += GRAVITY * dt;
+    state.bird.y += state.bird.vy * dt;
 
     // Floor/Ceiling collision
     if (state.bird.y + state.bird.radius >= CANVAS_HEIGHT || state.bird.y - state.bird.radius <= 0) {
@@ -62,7 +62,7 @@ const HoverJumper: React.FC = () => {
     // Move pipes & check collision
     for (let i = 0; i < state.pipes.length; i++) {
       const p = state.pipes[i];
-      p.x -= PIPE_SPEED;
+      p.x -= PIPE_SPEED * dt;
 
       // Collision
       const birdRect = { 
@@ -139,8 +139,13 @@ const HoverJumper: React.FC = () => {
     }
   }, [gameStarted, gameOver]);
 
-  const loop = useCallback(() => {
-    update();
+  const lastTimeRef = useRef<number>(performance.now());
+
+  const loop = useCallback((timestamp: number) => {
+    const dt = (timestamp - lastTimeRef.current) / 16.666;
+    lastTimeRef.current = timestamp;
+
+    update(dt);
     const canvas = canvasRef.current;
     if (canvas) {
       const ctx = canvas.getContext('2d');

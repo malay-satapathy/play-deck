@@ -39,31 +39,31 @@ const NeonPong: React.FC = () => {
     };
   };
 
-  const update = useCallback(() => {
+  const update = useCallback((dt: number) => {
     if (gameOver) return;
     const state = gameState.current;
     
     // Player 1 Movement (W/S)
-    if (state.keys.w && state.p1.y > 0) state.p1.y -= PADDLE_SPEED;
-    if (state.keys.s && state.p1.y < CANVAS_HEIGHT - PADDLE_HEIGHT) state.p1.y += PADDLE_SPEED;
+    if (state.keys.w && state.p1.y > 0) state.p1.y -= PADDLE_SPEED * dt;
+    if (state.keys.s && state.p1.y < CANVAS_HEIGHT - PADDLE_HEIGHT) state.p1.y += PADDLE_SPEED * dt;
 
     // Player 2 / Bot Movement
     if (mode === '2P') {
-      if (state.keys.up && state.p2.y > 0) state.p2.y -= PADDLE_SPEED;
-      if (state.keys.down && state.p2.y < CANVAS_HEIGHT - PADDLE_HEIGHT) state.p2.y += PADDLE_SPEED;
+      if (state.keys.up && state.p2.y > 0) state.p2.y -= PADDLE_SPEED * dt;
+      if (state.keys.down && state.p2.y < CANVAS_HEIGHT - PADDLE_HEIGHT) state.p2.y += PADDLE_SPEED * dt;
     } else if (mode === '1P') {
       // Simple Bot AI
       const botCenter = state.p2.y + PADDLE_HEIGHT / 2;
       if (botCenter < state.ball.y - 10 && state.p2.y < CANVAS_HEIGHT - PADDLE_HEIGHT) {
-        state.p2.y += PADDLE_SPEED * 0.7; // slightly slower than player
+        state.p2.y += PADDLE_SPEED * 0.7 * dt; // slightly slower than player
       } else if (botCenter > state.ball.y + 10 && state.p2.y > 0) {
-        state.p2.y -= PADDLE_SPEED * 0.7;
+        state.p2.y -= PADDLE_SPEED * 0.7 * dt;
       }
     }
 
     // Ball movement
-    state.ball.x += state.ball.vx;
-    state.ball.y += state.ball.vy;
+    state.ball.x += state.ball.vx * dt;
+    state.ball.y += state.ball.vy * dt;
 
     // Wall collision (top/bottom)
     if (state.ball.y <= 0 || state.ball.y >= CANVAS_HEIGHT - BALL_SIZE) {
@@ -138,14 +138,21 @@ const NeonPong: React.FC = () => {
     ctx.shadowBlur = 0; // reset for next frame
   }, []);
 
-  const loop = useCallback(() => {
+  const lastTimeRef = useRef<number>(performance.now());
+
+  const loop = useCallback((timestamp: number) => {
     if (!gameOver && mode) {
-      update();
+      const dt = (timestamp - lastTimeRef.current) / 16.666;
+      lastTimeRef.current = timestamp;
+
+      update(dt);
       const canvas = canvasRef.current;
       if (canvas) {
         const ctx = canvas.getContext('2d');
         if (ctx) draw(ctx);
       }
+    } else {
+      lastTimeRef.current = timestamp;
     }
     requestRef.current = requestAnimationFrame(loop);
   }, [update, draw, gameOver, mode]);

@@ -59,17 +59,17 @@ const BlockBuster: React.FC = () => {
     gameState.current.paddle.x = CANVAS_WIDTH / 2 - PADDLE_WIDTH / 2;
   };
 
-  const update = useCallback(() => {
+  const update = useCallback((dt: number) => {
     if (gameOver || win) return;
     const state = gameState.current;
     
     // Paddle movement
-    if (state.keys.left && state.paddle.x > 0) state.paddle.x -= PADDLE_SPEED;
-    if (state.keys.right && state.paddle.x < CANVAS_WIDTH - state.paddle.w) state.paddle.x += PADDLE_SPEED;
+    if (state.keys.left && state.paddle.x > 0) state.paddle.x -= PADDLE_SPEED * dt;
+    if (state.keys.right && state.paddle.x < CANVAS_WIDTH - state.paddle.w) state.paddle.x += PADDLE_SPEED * dt;
 
     // Ball movement
-    state.ball.x += state.ball.vx;
-    state.ball.y += state.ball.vy;
+    state.ball.x += state.ball.vx * dt;
+    state.ball.y += state.ball.vy * dt;
 
     // Wall collision
     if (state.ball.x <= 0 || state.ball.x >= CANVAS_WIDTH - BALL_SIZE) state.ball.vx *= -1;
@@ -156,14 +156,21 @@ const BlockBuster: React.FC = () => {
     ctx.shadowBlur = 0;
   }, []);
 
-  const loop = useCallback(() => {
+  const lastTimeRef = useRef<number>(performance.now());
+
+  const loop = useCallback((timestamp: number) => {
     if (!gameOver && !win) {
-      update();
+      const dt = (timestamp - lastTimeRef.current) / 16.666;
+      lastTimeRef.current = timestamp;
+
+      update(dt);
       const canvas = canvasRef.current;
       if (canvas) {
         const ctx = canvas.getContext('2d');
         if (ctx) draw(ctx);
       }
+    } else {
+      lastTimeRef.current = timestamp;
     }
     requestRef.current = requestAnimationFrame(loop);
   }, [update, draw, gameOver, win]);

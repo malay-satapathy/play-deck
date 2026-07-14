@@ -77,18 +77,26 @@ const NeonRider: React.FC = () => {
     ctx.shadowBlur = 0; // reset
   }, []);
 
+  const lastTimeRef = useRef<number>(performance.now());
+
   const gameLoop = useCallback((time: number) => {
-    if (gameOver) return;
+    if (gameOver) {
+      lastTimeRef.current = time;
+      return;
+    }
+
+    const dt = (time - lastTimeRef.current) / 16.666;
+    lastTimeRef.current = time;
 
     const state = stateRef.current;
     
     // Move player
-    const moveDelta = 7 * state.speedMult;
+    const moveDelta = 7 * state.speedMult * dt;
     if (state.keys.left) state.playerX = Math.max(PLAYER_SIZE, state.playerX - moveDelta);
     if (state.keys.right) state.playerX = Math.min(CANVAS_WIDTH - PLAYER_SIZE, state.playerX + moveDelta);
 
     // Speed increases over time, much faster scaling
-    state.speedMult += 0.001;
+    state.speedMult += 0.001 * dt;
 
     // Spawn obstacles
     if (time - lastSpawnRef.current > 1000 / state.speedMult) {
@@ -103,7 +111,7 @@ const NeonRider: React.FC = () => {
     // Move obstacles and check collision
     let collided = false;
     state.obstacles = state.obstacles.filter(obs => {
-      obs.y += obs.speed;
+      obs.y += obs.speed * dt;
       
       // Collision AABB with player bounding box roughly
       if (

@@ -11,16 +11,17 @@ interface DeckCardProps {
   suit: string;
   rank: string;
   color: string;
+  index: number;
 }
 
-const DeckCard: React.FC<DeckCardProps> = ({ id, name, description, gradient, icon, suit, rank, color }) => {
+const DeckCard: React.FC<DeckCardProps> = ({ id, name, description, gradient, icon, suit, rank, color, index }) => {
   const navigate = useNavigate();
 
   return (
     <div 
       className={`${styles.deckCard} glass-panel`}
       onClick={() => navigate(`/game/${id}`)}
-      style={{ '--suit-color': color } as React.CSSProperties}
+      style={{ '--suit-color': color, animationDelay: `${index * 0.05}s` } as React.CSSProperties}
     >
       <div className={styles.cardCorner} style={{ top: 12, left: 12 }}>
         <span className={styles.cardRank}>{rank}</span>

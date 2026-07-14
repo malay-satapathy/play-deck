@@ -49,14 +49,14 @@ const AstroStrike: React.FC = () => {
     gameState.current.enemies = enemies;
   };
 
-  const update = useCallback(() => {
+  const update = useCallback((dt: number) => {
     if (gameOver || win) return;
     const state = gameState.current;
     const now = Date.now();
     
     // Player movement
-    if (state.keys.left && state.player.x > 0) state.player.x -= PLAYER_SPEED;
-    if (state.keys.right && state.player.x < CANVAS_WIDTH - state.player.w) state.player.x += PLAYER_SPEED;
+    if (state.keys.left && state.player.x > 0) state.player.x -= PLAYER_SPEED * dt;
+    if (state.keys.right && state.player.x < CANVAS_WIDTH - state.player.w) state.player.x += PLAYER_SPEED * dt;
 
     // Shooting
     if (state.keys.space && now - state.lastShot > 300) {
@@ -65,7 +65,7 @@ const AstroStrike: React.FC = () => {
     }
 
     // Move lasers
-    state.lasers.forEach(l => l.y -= LASER_SPEED);
+    state.lasers.forEach(l => l.y -= LASER_SPEED * dt);
     state.lasers = state.lasers.filter(l => l.y > 0); // remove off-screen
 
     // Move enemies
@@ -79,7 +79,7 @@ const AstroStrike: React.FC = () => {
     }
 
     activeEnemies.forEach(e => {
-      e.x += state.enemySpeed * state.enemyDir;
+      e.x += state.enemySpeed * state.enemyDir * dt;
       if (e.x <= 0 || e.x + e.w >= CANVAS_WIDTH) edgeHit = true;
     });
 
@@ -148,14 +148,21 @@ const AstroStrike: React.FC = () => {
     ctx.shadowBlur = 0;
   }, []);
 
-  const loop = useCallback(() => {
+  const lastTimeRef = useRef<number>(performance.now());
+
+  const loop = useCallback((timestamp: number) => {
     if (!gameOver && !win) {
-      update();
+      const dt = (timestamp - lastTimeRef.current) / 16.666;
+      lastTimeRef.current = timestamp;
+
+      update(dt);
       const canvas = canvasRef.current;
       if (canvas) {
         const ctx = canvas.getContext('2d');
         if (ctx) draw(ctx);
       }
+    } else {
+      lastTimeRef.current = timestamp;
     }
     requestRef.current = requestAnimationFrame(loop);
   }, [update, draw, gameOver, win]);

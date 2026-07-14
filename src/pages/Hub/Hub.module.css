@@ -1,35 +1,46 @@
 .hubContainer {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 40px 20px;
-  animation: fadeIn 0.5s ease-out;
+  padding: 60px 20px;
+  animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hubHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 60px;
+  margin-bottom: 80px;
+  padding: 0 20px;
 }
 
 .hubTitle {
-  font-size: 3.5rem;
+  font-size: 4rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #60a5fa, #c084fc);
+  background: linear-gradient(135deg, #60a5fa, #c084fc, #ec4899);
+  background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  animation: gradientFlow 5s linear infinite;
+  letter-spacing: -1px;
 }
 
 .hubSubtitle {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   color: #94a3b8;
+  font-weight: 300;
 }
 
 .statsPanel {
   display: flex;
-  gap: 24px;
-  padding: 16px 32px;
+  gap: 32px;
+  padding: 20px 40px;
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--card-border);
+  border-radius: 24px;
+  box-shadow: var(--card-shadow);
 }
 
 .statBox {
@@ -39,48 +50,77 @@
 }
 
 .statLabel {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
   color: #94a3b8;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+  font-weight: 600;
 }
 
 .statValue {
-  font-size: 1.8rem;
+  font-size: 2.2rem;
   font-weight: 800;
-  color: #f8fafc;
+  background: linear-gradient(180deg, #f8fafc, #cbd5e1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* Card Grid Layout */
 .deckGrid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 40px;
+  padding: 20px;
+  perspective: 1000px; /* Enable 3D space */
 }
 
-/* Deck Card Styling (Poker Card Aspect Ratio ~2.5:3.5) */
+/* Deck Card Styling */
 .deckCard {
-  width: 300px;
-  height: 420px;
   position: relative;
+  height: 440px;
   cursor: pointer;
-  background: #1e293b;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 16px;
-  padding: 24px;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 32px 24px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  animation: slideUpFade 0.6s backwards;
+}
+
+.deckCard::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 24px;
+  padding: 2px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.1) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.5;
+  transition: opacity 0.5s ease;
 }
 
 .deckCard:hover {
-  transform: translateY(-15px) scale(1.05) rotate(2deg);
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 255, 255, 0.1);
+  transform: translateY(-20px) scale(1.05) rotateX(5deg) rotateY(-5deg);
+  box-shadow: 
+    20px 30px 60px rgba(0, 0, 0, 0.6), 
+    0 0 30px var(--suit-color, rgba(255,255,255,0.2));
   z-index: 10;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(30, 41, 59, 0.8);
+}
+
+.deckCard:hover::before {
+  opacity: 1;
 }
 
 /* Playing Card Corner Indices */
@@ -91,15 +131,16 @@
   align-items: center;
   line-height: 1.1;
   color: var(--suit-color);
+  text-shadow: 0 0 15px var(--suit-color);
 }
 
 .cardRank {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 800;
 }
 
 .cardSuit {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
 }
 
 /* Center Graphic */
@@ -108,58 +149,85 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 20px;
 }
 
 .cardGraphic {
-  width: 120px;
-  height: 120px;
+  width: 130px;
+  height: 130px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 40px rgba(255, 255, 255, 0.05), 0 0 50px var(--suit-color);
+  background: rgba(0,0,0,0.2);
+  transition: transform 0.5s ease;
+}
+
+.deckCard:hover .cardGraphic {
+  transform: scale(1.15) translateZ(30px);
 }
 
 /* Bottom Text Content */
 .cardContent {
   text-align: center;
   margin-top: auto;
-  padding: 0 24px 20px 24px; /* added padding to prevent overlap */
+  padding: 0 10px 10px 10px;
+  position: relative;
+  z-index: 2;
+  transform: translateZ(20px);
 }
 
 .cardContent h3 {
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: 800;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   color: #f8fafc;
+  letter-spacing: -0.5px;
 }
 
 .cardContent p {
-  color: #cbd5e1;
+  color: #94a3b8;
   font-size: 0.95rem;
-  line-height: 1.4;
+  line-height: 1.5;
+  font-weight: 300;
+}
+
+/* Stagger Animations via inline style index */
+@keyframes slideUpFade {
+  0% { opacity: 0; transform: translateY(40px) scale(0.9); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes gradientFlow {
+  to { background-position: 200% center; }
 }
 
 /* Responsiveness */
 @media (max-width: 768px) {
   .hubHeader {
     flex-direction: column;
-    gap: 24px;
-    align-items: flex-start;
+    gap: 32px;
+    align-items: center;
+    text-align: center;
   }
   
+  .hubTitle {
+    font-size: 2.8rem;
+  }
+
   .statsPanel {
     width: 100%;
     justify-content: space-around;
   }
   
   .deckGrid {
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    padding: 10px;
   }
   
   .deckCard {
-    width: 100%;
-    max-width: 320px;
-    height: 380px;
+    height: 400px;
   }
 }

@@ -69,25 +69,25 @@ const AsteroidBlaster: React.FC = () => {
     if (p.y >= CANVAS_HEIGHT) p.y -= CANVAS_HEIGHT;
   };
 
-  const update = useCallback(() => {
+  const update = useCallback((dt: number) => {
     if (gameOver || win) return;
     const state = gameState.current;
     
     // Ship rotation
-    if (state.keys.left) state.ship.a -= ROTATION_SPEED;
-    if (state.keys.right) state.ship.a += ROTATION_SPEED;
+    if (state.keys.left) state.ship.a -= ROTATION_SPEED * dt;
+    if (state.keys.right) state.ship.a += ROTATION_SPEED * dt;
     
     // Thrust
     if (state.keys.up) {
-      state.ship.vx += Math.cos(state.ship.a) * THRUST;
-      state.ship.vy += Math.sin(state.ship.a) * THRUST;
+      state.ship.vx += Math.cos(state.ship.a) * THRUST * dt;
+      state.ship.vy += Math.sin(state.ship.a) * THRUST * dt;
     }
     
     // Apply friction & move
-    state.ship.vx *= FRICTION;
-    state.ship.vy *= FRICTION;
-    state.ship.x += state.ship.vx;
-    state.ship.y += state.ship.vy;
+    state.ship.vx *= Math.pow(FRICTION, dt);
+    state.ship.vy *= Math.pow(FRICTION, dt);
+    state.ship.x += state.ship.vx * dt;
+    state.ship.y += state.ship.vy * dt;
     wrap(state.ship);
 
     // Shoot
@@ -105,9 +105,9 @@ const AsteroidBlaster: React.FC = () => {
     // Move lasers
     for (let i = state.lasers.length - 1; i >= 0; i--) {
       const l = state.lasers[i];
-      l.x += l.vx;
-      l.y += l.vy;
-      l.life--;
+      l.x += l.vx * dt;
+      l.y += l.vy * dt;
+      l.life -= dt;
       wrap(l);
       if (l.life <= 0) state.lasers.splice(i, 1);
     }
@@ -115,8 +115,8 @@ const AsteroidBlaster: React.FC = () => {
     // Move Asteroids & Collisions
     for (let i = state.asteroids.length - 1; i >= 0; i--) {
       const a = state.asteroids[i];
-      a.x += a.vx;
-      a.y += a.vy;
+      a.x += a.vx * dt;
+      a.y += a.vy * dt;
       wrap(a);
 
       // Ship collision
@@ -234,14 +234,21 @@ const AsteroidBlaster: React.FC = () => {
     ctx.shadowBlur = 0;
   }, []);
 
-  const loop = useCallback(() => {
+  const lastTimeRef = useRef<number>(performance.now());
+
+  const loop = useCallback((timestamp: number) => {
     if (!gameOver && !win) {
-      update();
+      const dt = (timestamp - lastTimeRef.current) / 16.666;
+      lastTimeRef.current = timestamp;
+
+      update(dt);
       const canvas = canvasRef.current;
       if (canvas) {
         const ctx = canvas.getContext('2d');
         if (ctx) draw(ctx);
       }
+    } else {
+      lastTimeRef.current = timestamp;
     }
     requestRef.current = requestAnimationFrame(loop);
   }, [update, draw, gameOver, win]);

@@ -10,14 +10,6 @@ import {
 
 const GAMES = [
   {
-    id: 'tetra-drop',
-    name: 'Tetra-Drop',
-    description: 'The world\'s most famous falling block puzzle. Clear lines to survive.',
-    gradient: 'linear-gradient(135deg, #a855f7, #7e22ce)',
-    icon: <Shapes size={48} color="white" />,
-    suit: '♠', rank: 'A', color: '#f8fafc'
-  },
-  {
     id: 'maze-muncher',
     name: 'Maze-Muncher',
     description: 'The iconic dot-eating, ghost-dodging arcade legend.',
@@ -26,12 +18,12 @@ const GAMES = [
     suit: '♥', rank: 'K', color: '#ef4444'
   },
   {
-    id: 'astro-strike',
-    name: 'Astro-Strike',
-    description: 'Defend earth from descending alien invaders.',
-    gradient: 'linear-gradient(135deg, #06b6d4, #0891b2)',
-    icon: <Rocket size={48} color="white" />,
-    suit: '♣', rank: 'Q', color: '#f8fafc'
+    id: 'tetra-drop',
+    name: 'Tetra-Drop',
+    description: 'The world\'s most famous falling block puzzle. Clear lines to survive.',
+    gradient: 'linear-gradient(135deg, #a855f7, #7e22ce)',
+    icon: <Shapes size={48} color="white" />,
+    suit: '♠', rank: 'A', color: '#f8fafc'
   },
   {
     id: 'cyber-snake',
@@ -40,6 +32,14 @@ const GAMES = [
     gradient: 'linear-gradient(135deg, #22c55e, #15803d)',
     icon: <Bug size={48} color="white" />,
     suit: '♦', rank: 'J', color: '#ef4444'
+  },
+  {
+    id: 'astro-strike',
+    name: 'Astro-Strike',
+    description: 'Defend earth from descending alien invaders.',
+    gradient: 'linear-gradient(135deg, #06b6d4, #0891b2)',
+    icon: <Rocket size={48} color="white" />,
+    suit: '♣', rank: 'Q', color: '#f8fafc'
   },
   {
     id: 'neon-pong',
@@ -58,44 +58,12 @@ const GAMES = [
     suit: '♥', rank: '9', color: '#ef4444'
   },
   {
-    id: 'block-buster',
-    name: 'Block-Buster',
-    description: 'Bounce the ball to break all the colored bricks.',
-    gradient: 'linear-gradient(135deg, #38bdf8, #0369a1)',
-    icon: <Gamepad2 size={48} color="white" />,
-    suit: '♣', rank: '8', color: '#f8fafc'
-  },
-  {
     id: 'grid-sweeper',
     name: 'Grid-Sweeper',
     description: 'Use logic to flag hidden mines without detonating them.',
     gradient: 'linear-gradient(135deg, #94a3b8, #475569)',
     icon: <Bomb size={48} color="white" />,
     suit: '♦', rank: '7', color: '#ef4444'
-  },
-  {
-    id: 'hover-jumper',
-    name: 'Hover-Jumper',
-    description: 'Tap to flap and dodge the endless pipes.',
-    gradient: 'linear-gradient(135deg, #f472b6, #db2777)',
-    icon: <Wind size={48} color="white" />,
-    suit: '♠', rank: '6', color: '#f8fafc'
-  },
-  {
-    id: 'river-hopper',
-    name: 'River-Hopper',
-    description: 'Dodge cars and ride logs to cross the deadly river.',
-    gradient: 'linear-gradient(135deg, #4ade80, #16a34a)',
-    icon: <Navigation size={48} color="white" />,
-    suit: '♥', rank: '5', color: '#ef4444'
-  },
-  {
-    id: 'word-master',
-    name: 'Word-Master',
-    description: 'Guess the secret 5-letter word in 6 tries.',
-    gradient: 'linear-gradient(135deg, #64748b, #334155)',
-    icon: <Type size={48} color="white" />,
-    suit: '♣', rank: '4', color: '#f8fafc'
   },
   {
     id: 'gravity-4',
@@ -122,12 +90,36 @@ const GAMES = [
     suit: '♥', rank: 'A', color: '#ef4444'
   },
   {
-    id: 'card-flip',
-    name: 'Card-Flip',
-    description: 'Flip cards and find the matching pairs.',
-    gradient: 'linear-gradient(135deg, #c084fc, #9333ea)',
-    icon: <Shuffle size={48} color="white" />,
-    suit: '♣', rank: 'K', color: '#f8fafc'
+    id: 'block-buster',
+    name: 'Block-Buster',
+    description: 'Bounce the ball to break all the colored bricks.',
+    gradient: 'linear-gradient(135deg, #38bdf8, #0369a1)',
+    icon: <Gamepad2 size={48} color="white" />,
+    suit: '♣', rank: '8', color: '#f8fafc'
+  },
+  {
+    id: 'hover-jumper',
+    name: 'Hover-Jumper',
+    description: 'Tap to flap and dodge the endless pipes.',
+    gradient: 'linear-gradient(135deg, #f472b6, #db2777)',
+    icon: <Wind size={48} color="white" />,
+    suit: '♠', rank: '6', color: '#f8fafc'
+  },
+  {
+    id: 'river-hopper',
+    name: 'River-Hopper',
+    description: 'Dodge cars and ride logs to cross the deadly river.',
+    gradient: 'linear-gradient(135deg, #4ade80, #16a34a)',
+    icon: <Navigation size={48} color="white" />,
+    suit: '♥', rank: '5', color: '#ef4444'
+  },
+  {
+    id: 'word-master',
+    name: 'Word-Master',
+    description: 'Guess the secret 5-letter word in 6 tries.',
+    gradient: 'linear-gradient(135deg, #64748b, #334155)',
+    icon: <Type size={48} color="white" />,
+    suit: '♣', rank: '4', color: '#f8fafc'
   },
   {
     id: 'spring-ninja',
@@ -136,6 +128,14 @@ const GAMES = [
     gradient: 'linear-gradient(135deg, #4c1d95, #312e81)',
     icon: <ArrowUpToLine size={48} color="white" />,
     suit: '♦', rank: 'Q', color: '#ef4444'
+  },
+  {
+    id: 'card-flip',
+    name: 'Card-Flip',
+    description: 'Flip cards and find the matching pairs.',
+    gradient: 'linear-gradient(135deg, #c084fc, #9333ea)',
+    icon: <Shuffle size={48} color="white" />,
+    suit: '♣', rank: 'K', color: '#f8fafc'
   },
   // Original indie games
   {
@@ -211,8 +211,8 @@ const Hub: React.FC = () => {
       </header>
       
       <main className={styles.deckGrid}>
-        {GAMES.map(game => (
-          <DeckCard key={game.id} {...game} />
+        {GAMES.map((game, index) => (
+          <DeckCard key={game.id} {...game} index={index} />
         ))}
       </main>
     </div>
