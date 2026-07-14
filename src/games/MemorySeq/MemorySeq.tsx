@@ -6,94 +6,203 @@ import styles from './MemorySeq.module.css';
 const COLORS = ['#ef4444', '#22c55e', '#3b82f6', '#eab308']; // Red, Green, Blue, Yellow
 const SOUNDS = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5 (frequencies)
 
+type GameStatus = 'IDLE' | 'WATCH' | 'PLAY' | 'WAIT' | 'GAMEOVER';
+
+const SimonButton = React.memo(({ 
+  idx, color, isActive, onPointerDown, onPointerUp, disabled
+}: {
+  idx: number, color: string, isActive: boolean, 
+  onPointerDown: (idx: number) => void, onPointerUp: (idx: number) => void, disabled: boolean
+}) => (
+  <div 
+    className={`${styles.simonBtn} ${styles['btn-' + idx]} ${isActive ? styles.active : ''}`}
+    style={{ '--btn-color': color } as React.CSSProperties}
+    onPointerDown={() => {
+      if (!disabled) onPointerDown(idx);
+    }}
+    onPointerUp={() => onPointerUp(idx)}
+    onPointerLeave={() => onPointerUp(idx)}
+  />
+));
+
 const MemorySeq: React.FC = () => {
   const [sequence, setSequence] = useState<number[]>([]);
   const [playerStep, setPlayerStep] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [gameStatus, setGameStatus] = useState<GameStatus>('IDLE');
   const [activeButton, setActiveButton] = useState<number | null>(null);
-  const [gameOver, setGameOver] = useState(false);
+  const [isError, setIsError] = useState(false);
   
   const { addXp } = useGlobalState();
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const activeOscRef = useRef<{ osc: OscillatorNode, gainNode: GainNode } | null>(null);
+  const playbackRef = useRef<number>(0);
 
-  const initGame = useCallback(() => {
-    setSequence([Math.floor(Math.random() * 4)]);
-    setPlayerStep(0);
-    setGameOver(false);
-    setIsPlaying(true);
+  useEffect(() => {
+    return () => {
+      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+        audioCtxRef.current.close().catch(() => {});
+      }
+    };
   }, []);
 
-  const playTone = (freq: number) => {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
+  const stopTone = useCallback(() => {
     const ctx = audioCtxRef.current;
-    if (ctx.state === 'suspended') ctx.resume();
+    if (!ctx || !activeOscRef.current) return;
+    const { osc, gainNode } = activeOscRef.current;
+    try {
+      gainNode.gain.setTargetAtTime(0, ctx.currentTime, 0.015);
+      osc.stop(ctx.currentTime + 0.1);
+    } catch (e) {
+      // ignore state errors
+    }
+    activeOscRef.current = null;
+  }, []);
+
+  const startTone = useCallback((freq: number, type: OscillatorType = 'sine') => {
+    const ctx = audioCtxRef.current;
+    if (!ctx) return;
+    if (activeOscRef.current) stopTone();
     
     const osc = ctx.createOscillator();
     const gainNode = ctx.createGain();
     
-    osc.type = 'sine';
+    osc.type = type;
     osc.frequency.setValueAtTime(freq, ctx.currentTime);
-    
     gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
     
     osc.connect(gainNode);
     gainNode.connect(ctx.destination);
     
     osc.start();
-    osc.stop(ctx.currentTime + 0.5);
-  };
+    activeOscRef.current = { osc, gainNode };
+  }, [stopTone]);
+
+  const playTone = useCallback((freq: number, durationMs: number, type: OscillatorType = 'sine') => {
+    startTone(freq, type);
+    setTimeout(() => stopTone(), durationMs);
+  }, [startTone, stopTone]);
+
+  const initGame = useCallback(() => {
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    if (audioCtxRef.current.state === 'suspended') {
+      audioCtxRef.current.resume();
+    }
+    
+    playbackRef.current++; // abort any existing
+    setSequence([Math.floor(Math.random() * 4)]);
+    setPlayerStep(0);
+    setIsError(false);
+    setGameStatus('WATCH');
+  }, []);
 
   const playSequence = useCallback(async () => {
-    setIsPlaying(true);
+    const currentPlaybackId = ++playbackRef.current;
+    setGameStatus('WATCH');
+    
+    // Dynamic speeds (progressive)
+    const noteDuration = Math.max(150, 500 - sequence.length * 20);
+    const gapDuration = Math.max(50, 400 - sequence.length * 15);
+    
+    // Initial delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+
     for (let i = 0; i < sequence.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 400)); // gap between notes
+      if (playbackRef.current !== currentPlaybackId) return;
       
       const btn = sequence[i];
       setActiveButton(btn);
-      playTone(SOUNDS[btn]);
+      startTone(SOUNDS[btn]);
       
-      await new Promise(resolve => setTimeout(resolve, 500)); // note duration
+      await new Promise(resolve => setTimeout(resolve, noteDuration));
+      if (playbackRef.current !== currentPlaybackId) {
+        stopTone();
+        return;
+      }
+      
       setActiveButton(null);
+      stopTone();
+      await new Promise(resolve => setTimeout(resolve, gapDuration));
+      if (playbackRef.current !== currentPlaybackId) return;
     }
-    setIsPlaying(false);
-  }, [sequence]);
+    setGameStatus('PLAY');
+  }, [sequence, startTone, stopTone]);
 
   useEffect(() => {
-    if (sequence.length > 0 && !gameOver) {
+    if (sequence.length > 0 && gameStatus === 'WATCH') {
       playSequence();
     }
-  }, [sequence, gameOver, playSequence]);
+  }, [sequence, gameStatus, playSequence]);
 
-  const handleButtonClick = (index: number) => {
-    if (isPlaying || gameOver) return;
-
-    // Play feedback
-    setActiveButton(index);
-    playTone(SOUNDS[index]);
-    setTimeout(() => setActiveButton(null), 200);
-
-    // Check logic
-    if (index === sequence[playerStep]) {
-      const nextStep = playerStep + 1;
-      setPlayerStep(nextStep);
-      
-      if (nextStep === sequence.length) {
-        // Level up
-        setPlayerStep(0);
-        setTimeout(() => {
-          setSequence(prev => [...prev, Math.floor(Math.random() * 4)]);
-        }, 1000);
-      }
-    } else {
-      // Wrong
-      setGameOver(true);
-      addXp(sequence.length * 5); // 5 XP per level reached
-      // Play error tone
-      playTone(100);
+  // Player Input Timeout
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    if (gameStatus === 'PLAY') {
+      timer = setTimeout(() => {
+        setGameStatus('GAMEOVER');
+        addXp(sequence.length * 5);
+        playTone(100, 600, 'sawtooth');
+        setIsError(true);
+      }, 5000); // 5 seconds to act
     }
+    return () => clearTimeout(timer);
+  }, [gameStatus, playerStep, sequence.length, addXp, playTone]);
+
+  const handlePointerDown = useCallback((index: number) => {
+    if (gameStatus !== 'PLAY') return;
+    setActiveButton(index);
+    startTone(SOUNDS[index]);
+  }, [gameStatus, startTone]);
+
+  const handlePointerUp = useCallback((index: number) => {
+    if (gameStatus !== 'PLAY' || activeButton !== index) return;
+    
+    setActiveButton(null);
+    stopTone();
+    
+    setPlayerStep(prevStep => {
+      if (index === sequence[prevStep]) {
+        const nextStep = prevStep + 1;
+        if (nextStep === sequence.length) {
+          setGameStatus('WAIT');
+          // Level up chime
+          setTimeout(() => playTone(659.25, 150, 'sine'), 200); // E5
+          setTimeout(() => playTone(1046.50, 250, 'sine'), 350); // C6
+          
+          setTimeout(() => {
+            setSequence(seq => [...seq, Math.floor(Math.random() * 4)]);
+            setPlayerStep(0);
+            setGameStatus('WATCH');
+          }, 1200);
+        }
+        return nextStep;
+      } else {
+        setGameStatus('GAMEOVER');
+        addXp(sequence.length * 5);
+        playTone(100, 600, 'sawtooth');
+        setIsError(true);
+        return prevStep;
+      }
+    });
+  }, [gameStatus, activeButton, sequence, stopTone, playTone, addXp]);
+
+  const getStatusText = () => {
+    switch (gameStatus) {
+      case 'GAMEOVER': return 'GAME OVER';
+      case 'WATCH': return 'WATCH';
+      case 'PLAY': return 'PLAY';
+      case 'WAIT': return 'NICE!';
+      default: return 'SIMON';
+    }
+  };
+
+  const statusColor = () => {
+    if (gameStatus === 'WATCH') return '#eab308';
+    if (gameStatus === 'PLAY') return '#22c55e';
+    if (gameStatus === 'WAIT') return '#3b82f6';
+    if (gameStatus === 'GAMEOVER') return '#ef4444';
+    return '#94a3b8';
   };
 
   return (
@@ -106,24 +215,26 @@ const MemorySeq: React.FC = () => {
           <div className={styles.scoreBoard}>Level: {sequence.length || 1}</div>
         </div>
 
-        <div className={styles.simonContainer}>
-          <div className={styles.simonBoard}>
+        <div className={`${styles.simonContainer} ${gameStatus !== 'PLAY' ? styles.disabledCursor : ''}`}>
+          <div className={`${styles.simonBoard} ${isError ? styles.errorFlash : ''}`}>
             {COLORS.map((color, idx) => (
-              <div 
+              <SimonButton 
                 key={idx}
-                className={`${styles.simonBtn} ${styles['btn-' + idx]} ${activeButton === idx ? styles.active : ''}`}
-                style={{ '--btn-color': color } as React.CSSProperties}
-                onMouseDown={() => handleButtonClick(idx)}
-                onTouchStart={(e) => { e.preventDefault(); handleButtonClick(idx); }}
+                idx={idx}
+                color={color}
+                isActive={activeButton === idx}
+                onPointerDown={handlePointerDown}
+                onPointerUp={handlePointerUp}
+                disabled={gameStatus !== 'PLAY'}
               />
             ))}
-            <div className={styles.centerCircle}>
-              {gameOver ? 'GAME OVER' : (isPlaying ? 'WATCH' : 'PLAY')}
+            <div className={styles.centerCircle} style={{ color: statusColor() }}>
+              {getStatusText()}
             </div>
           </div>
         </div>
 
-        {gameOver && (
+        {gameStatus === 'GAMEOVER' && (
           <div className={styles.gameOverOverlay}>
             <h2>SEQUENCE BROKEN!</h2>
             <p>You reached Level: {sequence.length}</p>
@@ -132,7 +243,7 @@ const MemorySeq: React.FC = () => {
           </div>
         )}
 
-        {sequence.length === 0 && !gameOver && (
+        {gameStatus === 'IDLE' && (
           <div className={styles.startOverlay}>
             <button onClick={initGame} className={styles.restartBtn}>START</button>
           </div>
