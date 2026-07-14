@@ -180,8 +180,16 @@ const NeonPong: React.FC = () => {
   }, [update, draw, gameOver, mode]);
 
   useEffect(() => {
-    if (canvasRef.current && !ctxRef.current) {
-       ctxRef.current = canvasRef.current.getContext('2d');
+    const canvas = canvasRef.current;
+    if (canvas && !ctxRef.current) {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = CANVAS_WIDTH * dpr;
+      canvas.height = CANVAS_HEIGHT * dpr;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.scale(dpr, dpr);
+        ctxRef.current = ctx;
+      }
     }
     if (mode && !gameOver) {
       lastTimeRef.current = performance.now();
@@ -277,8 +285,7 @@ const NeonPong: React.FC = () => {
         <div className={styles.canvasContainer}>
           <canvas 
             ref={canvasRef} 
-            width={CANVAS_WIDTH} 
-            height={CANVAS_HEIGHT}
+            style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT, maxWidth: '100%', aspectRatio: '4/3' }}
             className={styles.canvas}
           />
           {/* Invisible touch overlays for mobile */}

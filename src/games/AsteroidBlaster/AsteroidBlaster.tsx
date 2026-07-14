@@ -342,6 +342,16 @@ const AsteroidBlaster: React.FC = () => {
   }, [loop]);
 
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = CANVAS_WIDTH * dpr;
+      canvas.height = CANVAS_HEIGHT * dpr;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.scale(dpr, dpr);
+      }
+    }
     resetShip(gameState.current);
     spawnAsteroids(gameState.current.level);
     syncUI();
@@ -427,8 +437,7 @@ const AsteroidBlaster: React.FC = () => {
         <div className={styles.canvasContainer}>
           <canvas 
             ref={canvasRef} 
-            width={CANVAS_WIDTH} 
-            height={CANVAS_HEIGHT}
+            style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT, maxWidth: '100%', aspectRatio: '4/3' }}
             className={styles.canvas}
           />
           

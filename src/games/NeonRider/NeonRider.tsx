@@ -184,6 +184,16 @@ const NeonRider: React.FC = () => {
 
   // Start game loop
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = CANVAS_WIDTH * dpr;
+      canvas.height = CANVAS_HEIGHT * dpr;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.scale(dpr, dpr);
+      }
+    }
     if (!gameOverRef.current) {
         lastTimeRef.current = 0; // Reset time so dt is calculated correctly on first frame
         requestRef.current = requestAnimationFrame(gameLoop);
@@ -224,8 +234,7 @@ const NeonRider: React.FC = () => {
         <div className={styles.canvasWrapper}>
           <canvas 
             ref={canvasRef} 
-            width={CANVAS_WIDTH} 
-            height={CANVAS_HEIGHT} 
+            style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT, maxWidth: '100%', aspectRatio: '4/3' }}
             className={styles.canvas}
           />
           
@@ -238,8 +247,28 @@ const NeonRider: React.FC = () => {
             </div>
           )}
         </div>
+        <div className={styles.mobileControls}>
+          <div className={styles.dirButtons}>
+            <button 
+              className={styles.controlBtn}
+              onPointerDown={(e) => { e.preventDefault(); stateRef.current.keys.left = true; }}
+              onPointerUp={(e) => { e.preventDefault(); stateRef.current.keys.left = false; }}
+              onPointerLeave={(e) => { e.preventDefault(); stateRef.current.keys.left = false; }}
+              onPointerCancel={(e) => { e.preventDefault(); stateRef.current.keys.left = false; }}
+              onContextMenu={(e) => e.preventDefault()}
+            >↺</button>
+            <button 
+              className={styles.controlBtn}
+              onPointerDown={(e) => { e.preventDefault(); stateRef.current.keys.right = true; }}
+              onPointerUp={(e) => { e.preventDefault(); stateRef.current.keys.right = false; }}
+              onPointerLeave={(e) => { e.preventDefault(); stateRef.current.keys.right = false; }}
+              onPointerCancel={(e) => { e.preventDefault(); stateRef.current.keys.right = false; }}
+              onContextMenu={(e) => e.preventDefault()}
+            >↻</button>
+          </div>
+        </div>
         <div className={styles.controlsText}>
-          Use ⬅️ and ➡️ arrow keys to dodge
+          Use ⬅️ and ➡️ or WASD to dodge
         </div>
       </div>
     </div>

@@ -96,3 +96,45 @@
   background: rgba(236, 72, 153, 0.2);
   box-shadow: inset 0 0 20px rgba(236, 72, 153, 0.5), 0 0 20px rgba(236, 72, 153, 0.5);
 }
+
+.mobileControls {
+  display: none;
+  width: 100%;
+  max-width: 400px;
+  margin-top: 15px;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  touch-action: manipulation;
+}
+
+.dirButtons {
+  display: flex;
+  gap: 20px;
+}
+
+.controlBtn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.controlBtn:active {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+@media (max-width: 768px) {
+  .mobileControls {
+    display: flex;
+  }
+}
