@@ -4,8 +4,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #020617;
+  background-color: #020617; /* Dark slate */
   padding: 80px 20px 40px;
+  overscroll-behavior: none;
+  touch-action: none;
 }
 
 .gameBoard {
@@ -13,7 +15,7 @@
   max-width: 800px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px;
 }
 
 .header {
@@ -23,114 +25,143 @@
 }
 
 .header h2 {
-  color: #a78bfa;
-  text-transform: uppercase;
-  letter-spacing: 4px;
-  text-shadow: 0 0 15px rgba(167, 139, 250, 0.5);
+  color: #fff;
+  font-size: 2rem;
+  margin: 0;
+  text-shadow: 0 0 10px #a78bfa;
 }
 
 .stats {
   display: flex;
-  gap: 16px;
-  background: rgba(167, 139, 250, 0.2);
-  color: #a78bfa;
+  gap: 15px;
+  color: #e2e8f0;
+  font-size: 1.2rem;
+  background: rgba(167, 139, 250, 0.1);
   padding: 8px 16px;
   border-radius: 8px;
-  font-weight: bold;
-  font-size: 1.2rem;
   border: 1px solid rgba(167, 139, 250, 0.3);
 }
 
 .canvasContainer {
   position: relative;
   width: 100%;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  border-radius: 12px;
+  border: 2px solid rgba(167, 139, 250, 0.3);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(167, 139, 250, 0.1);
   overflow: hidden;
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+  background: #0f172a;
 }
 
 .canvas {
+  display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 4/3; /* 800x600 */
-  display: block;
+  aspect-ratio: 4/3;
+  touch-action: none;
 }
 
 .gameOverOverlay {
   position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(2, 6, 23, 0.95);
-  padding: 40px 60px;
-  border-radius: 20px;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.85);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  color: white;
   text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 20;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .gameOverOverlay h2 {
-  font-size: 2.5rem;
-  margin-bottom: 8px;
+  font-size: 3rem;
+  margin-bottom: 10px;
+  text-shadow: 0 0 20px currentColor;
 }
 
 .gameOverOverlay p {
-  color: #e2e8f0;
-  font-size: 1.2rem;
-  margin-bottom: 12px;
+  font-size: 1.5rem;
+  margin-bottom: 25px;
+  color: #cbd5e1;
 }
 
 .restartBtn {
-  margin-top: 16px;
   background: #a78bfa;
-  color: #0f172a;
+  color: #1e1b4b;
   border: none;
-  padding: 12px 24px;
+  padding: 15px 40px;
   font-size: 1.2rem;
   font-weight: bold;
   border-radius: 8px;
   cursor: pointer;
-  transition: transform 0.2s, background 0.2s;
+  transition: all 0.2s;
+  box-shadow: 0 0 15px rgba(167, 139, 250, 0.4);
 }
 
 .restartBtn:hover {
   background: #8b5cf6;
-  transform: translateY(-2px);
+  color: white;
+  transform: scale(1.05);
 }
 
 .mobileControls {
   display: none;
   justify-content: space-between;
+  align-items: center;
   margin-top: 10px;
+  padding: 0 10px;
 }
 
 .dirButtons, .actionButtons {
   display: flex;
-  gap: 10px;
+  gap: 15px;
 }
 
 .controlBtn {
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #a78bfa;
-  border-radius: 12px;
   width: 60px;
   height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
   font-size: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+  transition: all 0.1s;
 }
 
 .controlBtn:active {
-  background: rgba(167, 139, 250, 0.2);
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(0.95);
 }
 
 .fireBtn {
-  background: rgba(244, 63, 94, 0.2);
-  color: #f43f5e;
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
 }
 
-@media (max-width: 768px) {
+.fireBtn:active {
+  background: rgba(239, 68, 68, 0.4);
+}
+
+@media (max-width: 1024px) {
   .mobileControls {
     display: flex;
   }

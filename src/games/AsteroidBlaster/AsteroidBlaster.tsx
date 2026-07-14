@@ -10,42 +10,58 @@ const LASER_SPEED = 10;
 const ROTATION_SPEED = 0.1;
 const THRUST = 0.15;
 const FRICTION = 0.98;
+const MAX_LIVES = 3;
+const INVULN_TIME = 2000; // 2 seconds
 
 type Point = { x: number, y: number };
-type Ship = Point & { vx: number, vy: number, a: number };
+type Ship = Point & { vx: number, vy: number, a: number, invulnTimer: number };
 type Laser = Point & { vx: number, vy: number, life: number };
 type Asteroid = Point & { vx: number, vy: number, r: number, points: number[] };
 
 const AsteroidBlaster: React.FC = () => {
-  const [score, setScore] = useState(0);
-  const [gameOver, setGameOver] = useState(false);
-  const [win, setWin] = useState(false);
-  
+  const [uiState, setUiState] = useState({ score: 0, lives: MAX_LIVES, gameOver: false, win: false, level: 1 });
   const { addXp } = useGlobalState();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const requestRef = useRef<number>(0);
   
   const gameState = useRef({
-    ship: { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2, vx: 0, vy: 0, a: -Math.PI / 2 } as Ship,
+    ship: { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2, vx: 0, vy: 0, a: -Math.PI / 2, invulnTimer: 0 } as Ship,
     lasers: [] as Laser[],
     asteroids: [] as Asteroid[],
     keys: { left: false, right: false, up: false, space: false },
     lastShot: 0,
-    level: 1
+    score: 0,
+    lives: MAX_LIVES,
+    level: 1,
+    gameOver: false,
+    win: false,
+    xpAwarded: false
   });
 
-  const createAsteroid = (x: number, y: number, r: number) => {
-    const points = [];
-    const numPoints = Math.floor(Math.random() * 5 + 5);
-    for (let i = 0; i < numPoints; i++) {
-      points.push(Math.random() * 0.4 + 0.8); // random jaggedness
+  const syncUI = () => {
+    setUiState({
+      score: gameState.current.score,
+      lives: gameState.current.lives,
+      gameOver: gameState.current.gameOver,
+      win: gameState.current.win,
+      level: gameState.current.level
+    });
+  };
+
+  const createAsteroid = (x: number, y: number, r: number, points?: number[], speedMultiplier: number = 2) => {
+    const pts = points || [];
+    if (!points) {
+      const numPoints = Math.floor(Math.random() * 5 + 5);
+      for (let i = 0; i < numPoints; i++) {
+        pts.push(Math.random() * 0.4 + 0.8);
+      }
     }
     return {
       x, y,
-      vx: (Math.random() - 0.5) * 4,
-      vy: (Math.random() - 0.5) * 4,
+      vx: (Math.random() - 0.5) * speedMultiplier,
+      vy: (Math.random() - 0.5) * speedMultiplier,
       r,
-      points
+      points: pts
     };
   };
 
@@ -56,8 +72,8 @@ const AsteroidBlaster: React.FC = () => {
       do {
         x = Math.random() * CANVAS_WIDTH;
         y = Math.random() * CANVAS_HEIGHT;
-      } while (Math.hypot(x - CANVAS_WIDTH / 2, y - CANVAS_HEIGHT / 2) < 100);
-      asts.push(createAsteroid(x, y, 40));
+      } while ((x - CANVAS_WIDTH/2)**2 + (y - CANVAS_HEIGHT/2)**2 < 20000); // 141 dist sq
+      asts.push(createAsteroid(x, y, 40, undefined, 2));
     }
     gameState.current.asteroids = asts;
   };
@@ -69,10 +85,28 @@ const AsteroidBlaster: React.FC = () => {
     if (p.y >= CANVAS_HEIGHT) p.y -= CANVAS_HEIGHT;
   };
 
-  const update = useCallback((dt: number) => {
-    if (gameOver || win) return;
+  const resetShip = (state: any) => {
+    state.ship = { 
+      x: CANVAS_WIDTH / 2, 
+      y: CANVAS_HEIGHT / 2, 
+      vx: 0, 
+      vy: 0, 
+      a: -Math.PI / 2, 
+      invulnTimer: INVULN_TIME 
+    };
+  };
+
+  const update = useCallback((dt: number, realTimeMs: number) => {
     const state = gameState.current;
+    if (state.gameOver || state.win) return;
     
+    let uiNeedsSync = false;
+
+    if (state.ship.invulnTimer > 0) {
+      // dt here is roughly 1 for 16.6ms, so let's convert to ms
+      state.ship.invulnTimer -= dt * 16.666;
+    }
+
     // Ship rotation
     if (state.keys.left) state.ship.a -= ROTATION_SPEED * dt;
     if (state.keys.right) state.ship.a += ROTATION_SPEED * dt;
@@ -91,15 +125,15 @@ const AsteroidBlaster: React.FC = () => {
     wrap(state.ship);
 
     // Shoot
-    if (state.keys.space && Date.now() - state.lastShot > 200) {
+    if (state.keys.space && (realTimeMs - state.lastShot > 200)) {
       state.lasers.push({
         x: state.ship.x + Math.cos(state.ship.a) * SHIP_SIZE,
         y: state.ship.y + Math.sin(state.ship.a) * SHIP_SIZE,
         vx: Math.cos(state.ship.a) * LASER_SPEED,
         vy: Math.sin(state.ship.a) * LASER_SPEED,
-        life: 60 // frames
+        life: 60
       });
-      state.lastShot = Date.now();
+      state.lastShot = realTimeMs;
     }
 
     // Move lasers
@@ -120,41 +154,80 @@ const AsteroidBlaster: React.FC = () => {
       wrap(a);
 
       // Ship collision
-      if (Math.hypot(state.ship.x - a.x, state.ship.y - a.y) < a.r + SHIP_SIZE) {
-        setGameOver(true);
-        addXp(Math.floor(score / 10));
-        return;
+      if (state.ship.invulnTimer <= 0) {
+        const dx = state.ship.x - a.x;
+        const dy = state.ship.y - a.y;
+        const distSq = dx*dx + dy*dy;
+        const radSum = a.r + SHIP_SIZE;
+        if (distSq < radSum * radSum) {
+          state.lives--;
+          uiNeedsSync = true;
+          if (state.lives <= 0) {
+            state.gameOver = true;
+            if (!state.xpAwarded) {
+               addXp(Math.floor(state.score / 10));
+               state.xpAwarded = true;
+            }
+            syncUI();
+            return;
+          } else {
+            resetShip(state);
+          }
+        }
       }
 
       // Laser collision
       for (let j = state.lasers.length - 1; j >= 0; j--) {
         const l = state.lasers[j];
-        if (Math.hypot(l.x - a.x, l.y - a.y) < a.r) {
+        const dx = l.x - a.x;
+        const dy = l.y - a.y;
+        if (dx*dx + dy*dy < a.r * a.r) {
           // Hit!
           state.lasers.splice(j, 1);
           state.asteroids.splice(i, 1);
-          setScore(s => s + (a.r > 20 ? 10 : 20));
           
-          if (a.r > 20) {
-            state.asteroids.push(createAsteroid(a.x, a.y, a.r / 2));
-            state.asteroids.push(createAsteroid(a.x, a.y, a.r / 2));
+          let p = 0;
+          if (a.r >= 35) p = 20;
+          else if (a.r >= 15) p = 50;
+          else p = 100;
+          
+          state.score += p;
+          uiNeedsSync = true;
+          
+          // Split logic
+          if (a.r >= 35) {
+            // Large to Medium
+            state.asteroids.push(createAsteroid(a.x, a.y, 20, a.points, 4));
+            state.asteroids.push(createAsteroid(a.x, a.y, 20, a.points, 4));
+          } else if (a.r >= 15) {
+            // Medium to Small
+            state.asteroids.push(createAsteroid(a.x, a.y, 10, a.points, 6));
+            state.asteroids.push(createAsteroid(a.x, a.y, 10, a.points, 6));
           }
-          break; // break laser loop since asteroid is destroyed
+          break;
         }
       }
     }
 
-    if (state.asteroids.length === 0) {
+    if (state.asteroids.length === 0 && !state.gameOver) {
       if (state.level === 3) {
-        setWin(true);
-        addXp(100);
+        state.win = true;
+        uiNeedsSync = true;
+        if (!state.xpAwarded) {
+          addXp(100);
+          state.xpAwarded = true;
+        }
       } else {
         state.level++;
+        uiNeedsSync = true;
         spawnAsteroids(state.level);
+        resetShip(state);
       }
     }
 
-  }, [gameOver, win, score, addXp]);
+    if (uiNeedsSync) syncUI();
+
+  }, [addXp]);
 
   const draw = useCallback((ctx: CanvasRenderingContext2D) => {
     const state = gameState.current;
@@ -164,49 +237,53 @@ const AsteroidBlaster: React.FC = () => {
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
     // Draw Ship
-    ctx.strokeStyle = '#22d3ee'; // Cyan
-    ctx.lineWidth = 2;
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = '#22d3ee';
-    ctx.beginPath();
-    ctx.moveTo(
-      state.ship.x + Math.cos(state.ship.a) * SHIP_SIZE,
-      state.ship.y + Math.sin(state.ship.a) * SHIP_SIZE
-    );
-    ctx.lineTo(
-      state.ship.x + Math.cos(state.ship.a - 2.5) * SHIP_SIZE,
-      state.ship.y + Math.sin(state.ship.a - 2.5) * SHIP_SIZE
-    );
-    ctx.lineTo(
-      state.ship.x + Math.cos(state.ship.a + 2.5) * SHIP_SIZE,
-      state.ship.y + Math.sin(state.ship.a + 2.5) * SHIP_SIZE
-    );
-    ctx.closePath();
-    ctx.stroke();
-    
-    // Thrust flame
-    if (state.keys.up) {
-      ctx.strokeStyle = '#f97316';
-      ctx.shadowColor = '#f97316';
+    if (state.ship.invulnTimer <= 0 || Math.floor(state.ship.invulnTimer / 100) % 2 === 0) {
+      ctx.strokeStyle = '#22d3ee'; // Cyan
+      ctx.lineWidth = 2;
+      // Minimal shadow for ship only
+      ctx.shadowBlur = 5;
+      ctx.shadowColor = '#22d3ee';
       ctx.beginPath();
       ctx.moveTo(
-        state.ship.x - Math.cos(state.ship.a) * SHIP_SIZE * 0.5,
-        state.ship.y - Math.sin(state.ship.a) * SHIP_SIZE * 0.5
+        state.ship.x + Math.cos(state.ship.a) * SHIP_SIZE,
+        state.ship.y + Math.sin(state.ship.a) * SHIP_SIZE
       );
       ctx.lineTo(
-        state.ship.x + Math.cos(state.ship.a + Math.PI - 0.3) * SHIP_SIZE * 1.5,
-        state.ship.y + Math.sin(state.ship.a + Math.PI - 0.3) * SHIP_SIZE * 1.5
+        state.ship.x + Math.cos(state.ship.a - 2.5) * SHIP_SIZE,
+        state.ship.y + Math.sin(state.ship.a - 2.5) * SHIP_SIZE
       );
       ctx.lineTo(
-        state.ship.x + Math.cos(state.ship.a + Math.PI + 0.3) * SHIP_SIZE * 1.5,
-        state.ship.y + Math.sin(state.ship.a + Math.PI + 0.3) * SHIP_SIZE * 1.5
+        state.ship.x + Math.cos(state.ship.a + 2.5) * SHIP_SIZE,
+        state.ship.y + Math.sin(state.ship.a + 2.5) * SHIP_SIZE
       );
+      ctx.closePath();
       ctx.stroke();
+      
+      // Thrust flame
+      if (state.keys.up) {
+        ctx.strokeStyle = '#f97316';
+        ctx.shadowColor = '#f97316';
+        ctx.beginPath();
+        ctx.moveTo(
+          state.ship.x - Math.cos(state.ship.a) * SHIP_SIZE * 0.5,
+          state.ship.y - Math.sin(state.ship.a) * SHIP_SIZE * 0.5
+        );
+        ctx.lineTo(
+          state.ship.x + Math.cos(state.ship.a + Math.PI - 0.3) * SHIP_SIZE * 1.5,
+          state.ship.y + Math.sin(state.ship.a + Math.PI - 0.3) * SHIP_SIZE * 1.5
+        );
+        ctx.lineTo(
+          state.ship.x + Math.cos(state.ship.a + Math.PI + 0.3) * SHIP_SIZE * 1.5,
+          state.ship.y + Math.sin(state.ship.a + Math.PI + 0.3) * SHIP_SIZE * 1.5
+        );
+        ctx.stroke();
+      }
     }
+
+    ctx.shadowBlur = 0; // Disable shadow for lasers/asteroids to save perf
 
     // Draw Lasers
     ctx.strokeStyle = '#fef08a';
-    ctx.shadowColor = '#fef08a';
     state.lasers.forEach(l => {
       ctx.beginPath();
       ctx.moveTo(l.x, l.y);
@@ -216,7 +293,6 @@ const AsteroidBlaster: React.FC = () => {
 
     // Draw Asteroids
     ctx.strokeStyle = '#a78bfa';
-    ctx.shadowColor = '#a78bfa';
     state.asteroids.forEach(a => {
       ctx.beginPath();
       for (let j = 0; j < a.points.length; j++) {
@@ -231,17 +307,24 @@ const AsteroidBlaster: React.FC = () => {
       ctx.stroke();
     });
 
-    ctx.shadowBlur = 0;
   }, []);
 
   const lastTimeRef = useRef<number>(performance.now());
+  const isFirstFrameRef = useRef(true);
 
   const loop = useCallback((timestamp: number) => {
-    if (!gameOver && !win) {
-      const dt = (timestamp - lastTimeRef.current) / 16.666;
+    if (!gameState.current.gameOver && !gameState.current.win) {
+      if (isFirstFrameRef.current) {
+         isFirstFrameRef.current = false;
+         lastTimeRef.current = timestamp;
+      }
+
+      let dt = (timestamp - lastTimeRef.current) / 16.666;
+      if (dt > 10) dt = 1; // Cap DT to prevent huge jumps
+
       lastTimeRef.current = timestamp;
 
-      update(dt);
+      update(dt, timestamp);
       const canvas = canvasRef.current;
       if (canvas) {
         const ctx = canvas.getContext('2d');
@@ -251,7 +334,7 @@ const AsteroidBlaster: React.FC = () => {
       lastTimeRef.current = timestamp;
     }
     requestRef.current = requestAnimationFrame(loop);
-  }, [update, draw, gameOver, win]);
+  }, [update, draw]);
 
   useEffect(() => {
     requestRef.current = requestAnimationFrame(loop);
@@ -259,12 +342,17 @@ const AsteroidBlaster: React.FC = () => {
   }, [loop]);
 
   useEffect(() => {
+    resetShip(gameState.current);
     spawnAsteroids(gameState.current.level);
+    syncUI();
   }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const state = gameState.current;
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', ' ', 'a', 'w', 'd'].includes(e.key)) {
+         e.preventDefault();
+      }
       if (e.key === 'ArrowLeft' || e.key === 'a') state.keys.left = true;
       if (e.key === 'ArrowRight' || e.key === 'd') state.keys.right = true;
       if (e.key === 'ArrowUp' || e.key === 'w') state.keys.up = true;
@@ -278,7 +366,7 @@ const AsteroidBlaster: React.FC = () => {
       if (e.key === ' ') state.keys.space = false;
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, { passive: false });
     window.addEventListener('keyup', handleKeyUp);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
@@ -288,27 +376,32 @@ const AsteroidBlaster: React.FC = () => {
 
   const restart = () => {
     gameState.current = {
-      ship: { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2, vx: 0, vy: 0, a: -Math.PI / 2 },
+      ship: { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2, vx: 0, vy: 0, a: -Math.PI / 2, invulnTimer: INVULN_TIME },
       lasers: [],
       asteroids: [],
       keys: { left: false, right: false, up: false, space: false },
       lastShot: 0,
-      level: 1
+      score: 0,
+      lives: MAX_LIVES,
+      level: 1,
+      gameOver: false,
+      win: false,
+      xpAwarded: false
     };
     spawnAsteroids(1);
-    setScore(0);
-    setGameOver(false);
-    setWin(false);
+    syncUI();
   };
 
-  const handleTouchStart = (action: 'LEFT' | 'RIGHT' | 'UP' | 'FIRE') => {
+  const handleInputStart = (e: React.SyntheticEvent, action: 'LEFT' | 'RIGHT' | 'UP' | 'FIRE') => {
+    e.preventDefault();
     if (action === 'LEFT') gameState.current.keys.left = true;
     if (action === 'RIGHT') gameState.current.keys.right = true;
     if (action === 'UP') gameState.current.keys.up = true;
     if (action === 'FIRE') gameState.current.keys.space = true;
   };
 
-  const handleTouchEnd = (action: 'LEFT' | 'RIGHT' | 'UP' | 'FIRE') => {
+  const handleInputEnd = (e: React.SyntheticEvent, action: 'LEFT' | 'RIGHT' | 'UP' | 'FIRE') => {
+    e.preventDefault();
     if (action === 'LEFT') gameState.current.keys.left = false;
     if (action === 'RIGHT') gameState.current.keys.right = false;
     if (action === 'UP') gameState.current.keys.up = false;
@@ -323,8 +416,9 @@ const AsteroidBlaster: React.FC = () => {
         <div className={styles.header}>
           <h2>Asteroid-Blaster</h2>
           <div className={styles.stats}>
-            <span>Level: {gameState.current.level}</span>
-            <span>Score: {score}</span>
+            <span>Level: {uiState.level}</span>
+            <span>Lives: {'❤️'.repeat(uiState.lives)}</span>
+            <span>Score: {uiState.score}</span>
           </div>
         </div>
 
@@ -335,42 +429,54 @@ const AsteroidBlaster: React.FC = () => {
             height={CANVAS_HEIGHT}
             className={styles.canvas}
           />
+          
+          {(uiState.gameOver || uiState.win) && (
+            <div className={styles.gameOverOverlay}>
+              <h2 style={{ color: uiState.win ? '#10b981' : '#ef4444' }}>
+                {uiState.win ? 'SECTOR CLEARED!' : 'GAME OVER'}
+              </h2>
+              <p>Score: {uiState.score}</p>
+              <p>XP Earned: {uiState.win ? '+100' : `+${Math.floor(uiState.score / 10)}`}</p>
+              <button onClick={restart} className={styles.restartBtn}>Play Again</button>
+            </div>
+          )}
         </div>
-
-        {(gameOver || win) && (
-          <div className={styles.gameOverOverlay}>
-            <h2 style={{ color: win ? '#10b981' : '#ef4444' }}>
-              {win ? 'SECTOR CLEARED!' : 'SHIP DESTROYED'}
-            </h2>
-            <p>Score: {score}</p>
-            <p>XP Earned: {win ? '+100' : `+${Math.floor(score / 10)}`}</p>
-            <button onClick={restart} className={styles.restartBtn}>Play Again</button>
-          </div>
-        )}
 
         <div className={styles.mobileControls}>
           <div className={styles.dirButtons}>
             <button 
               className={styles.controlBtn} 
-              onTouchStart={() => handleTouchStart('LEFT')} 
-              onTouchEnd={() => handleTouchEnd('LEFT')}
+              onPointerDown={(e) => handleInputStart(e, 'LEFT')}
+              onPointerUp={(e) => handleInputEnd(e, 'LEFT')}
+              onPointerLeave={(e) => handleInputEnd(e, 'LEFT')}
+              onPointerCancel={(e) => handleInputEnd(e, 'LEFT')}
+              onContextMenu={(e) => e.preventDefault()}
             >↺</button>
             <button 
               className={styles.controlBtn} 
-              onTouchStart={() => handleTouchStart('RIGHT')} 
-              onTouchEnd={() => handleTouchEnd('RIGHT')}
+              onPointerDown={(e) => handleInputStart(e, 'RIGHT')}
+              onPointerUp={(e) => handleInputEnd(e, 'RIGHT')}
+              onPointerLeave={(e) => handleInputEnd(e, 'RIGHT')}
+              onPointerCancel={(e) => handleInputEnd(e, 'RIGHT')}
+              onContextMenu={(e) => e.preventDefault()}
             >↻</button>
           </div>
           <div className={styles.actionButtons}>
             <button 
               className={styles.controlBtn} 
-              onTouchStart={() => handleTouchStart('UP')} 
-              onTouchEnd={() => handleTouchEnd('UP')}
+              onPointerDown={(e) => handleInputStart(e, 'UP')}
+              onPointerUp={(e) => handleInputEnd(e, 'UP')}
+              onPointerLeave={(e) => handleInputEnd(e, 'UP')}
+              onPointerCancel={(e) => handleInputEnd(e, 'UP')}
+              onContextMenu={(e) => e.preventDefault()}
             >🚀</button>
             <button 
               className={`${styles.controlBtn} ${styles.fireBtn}`}
-              onTouchStart={() => handleTouchStart('FIRE')} 
-              onTouchEnd={() => handleTouchEnd('FIRE')}
+              onPointerDown={(e) => handleInputStart(e, 'FIRE')}
+              onPointerUp={(e) => handleInputEnd(e, 'FIRE')}
+              onPointerLeave={(e) => handleInputEnd(e, 'FIRE')}
+              onPointerCancel={(e) => handleInputEnd(e, 'FIRE')}
+              onContextMenu={(e) => e.preventDefault()}
             >🔥</button>
           </div>
         </div>
