@@ -10,10 +10,10 @@
 
 .gameBoard {
   width: 100%;
-  max-width: 650px;
+  max-width: 800px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px;
 }
 
 .header {
@@ -23,109 +23,140 @@
 }
 
 .header h2 {
-  color: #c084fc;
-  text-transform: uppercase;
-  letter-spacing: 4px;
-  text-shadow: 0 0 15px rgba(192, 132, 252, 0.5);
+  color: #fff;
+  font-size: 2rem;
+  margin: 0;
+  text-shadow: 0 0 10px #f43f5e;
+}
+
+.stats {
+  display: flex;
+  gap: 10px;
 }
 
 .scoreBoard {
-  background: rgba(192, 132, 252, 0.2);
-  color: #c084fc;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: bold;
+  color: #fbbf24;
   font-size: 1.2rem;
-  border: 1px solid rgba(192, 132, 252, 0.3);
+  padding: 8px 16px;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.2);
 }
 
 .canvasContainer {
   position: relative;
   width: 100%;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(148, 163, 184, 0.2);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  background-color: #020617;
 }
 
 .canvas {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1; /* 600x600 */
   display: block;
+  touch-action: none;
 }
 
-.gameOverOverlay {
+.overlay {
   position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(2, 6, 23, 0.95);
-  padding: 40px 60px;
-  border-radius: 20px;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(2, 6, 23, 0.85);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  color: white;
   text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 20;
+  padding: 20px;
 }
 
-.gameOverOverlay h2 {
+.overlay h2 {
   font-size: 2.5rem;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  text-shadow: 0 0 15px currentColor;
 }
 
-.gameOverOverlay p {
-  color: #94a3b8;
+.overlay p {
   font-size: 1.2rem;
-  margin-bottom: 12px;
+  margin-bottom: 25px;
+  color: #cbd5e1;
 }
 
-.restartBtn {
-  margin-top: 16px;
-  background: #c084fc;
+.actionBtn {
+  background: #10b981;
   color: white;
   border: none;
-  padding: 12px 24px;
+  padding: 12px 30px;
   font-size: 1.2rem;
   font-weight: bold;
   border-radius: 8px;
   cursor: pointer;
-  transition: transform 0.2s, background 0.2s;
+  transition: all 0.2s;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
 }
 
-.restartBtn:hover {
-  background: #a855f7;
-  transform: translateY(-2px);
+.actionBtn:hover {
+  background: #059669;
+  transform: scale(1.05);
 }
 
 .mobileControls {
-  display: none;
-  grid-template-columns: 1fr 2fr 1fr;
-  gap: 16px;
-  margin-top: 10px;
+  display: none; /* Desktop default */
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.dpad {
+  display: flex;
+  gap: 15px;
 }
 
 .controlBtn {
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #c084fc;
-  border-radius: 12px;
+  width: 60px;
   height: 60px;
-  font-size: 2rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   cursor: pointer;
+  user-select: none;
+  touch-action: none;
+  transition: all 0.1s;
 }
 
-.controlBtn:active {
-  background: rgba(192, 132, 252, 0.2);
+.controlBtn:active, .controlBtn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(0.95);
 }
 
 .fireBtn {
-  font-size: 1.2rem;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #ef4444;
   font-weight: bold;
-  letter-spacing: 2px;
+  font-size: 1.1rem;
 }
 
-@media (max-width: 600px) {
+.fireBtn:active, .fireBtn:hover {
+  background: rgba(239, 68, 68, 0.4);
+}
+
+@media (max-width: 1024px) {
   .mobileControls {
-    display: grid;
+    display: flex;
   }
 }
