@@ -288,9 +288,12 @@ const TetraDrop: React.FC = () => {
   }, [gameOver, holdPiece, spawnPiece, popNextPiece]);
 
   const getGhostY = () => {
+    if (state.current.pieceType === 0) return 0; // Fix infinite loop on mount
     let y = Math.max(0, state.current.y); // start from at least 0
     while (!checkCollision(state.current.piece, state.current.x, y + 1, grid)) {
       y++;
+      // Failsafe to prevent catastrophic hangs just in case
+      if (y > ROWS + 5) break; 
     }
     return y;
   };
