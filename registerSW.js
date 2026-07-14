@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/play-deck/sw.js', { scope: '/play-deck/' })})}
