@@ -31,6 +31,19 @@ const TypingDefender: React.FC = () => {
   
   const { addXp } = useGlobalState();
   const idCounter = useRef(0);
+  const timeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const addTimeout = useCallback((fn: () => void, delay: number) => {
+    const id = setTimeout(fn, delay);
+    timeoutRefs.current.push(id);
+    return id;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      timeoutRefs.current.forEach(clearTimeout);
+    };
+  }, []);
 
   // Use refs for state accessed inside interval/listeners to avoid dependency thrashing
   const stateRef = useRef({ words, input, targetedWordId, gameOver, score });
@@ -48,8 +61,8 @@ const TypingDefender: React.FC = () => {
       return newH;
     });
     setDamageFlash(true);
-    setTimeout(() => setDamageFlash(false), 200);
-  }, [addXp]);
+    addTimeout(() => setDamageFlash(false), 200);
+  }, [addXp, addTimeout]);
 
   const spawnWord = useCallback(() => {
     const text = DICTIONARY[Math.floor(Math.random() * DICTIONARY.length)];
@@ -122,7 +135,7 @@ const TypingDefender: React.FC = () => {
             setInput('');
             setTargetedWordId(null);
             setErrorFlash(true);
-            setTimeout(() => setErrorFlash(false), 150);
+            addTimeout(() => setErrorFlash(false), 150);
             setScore(s => Math.max(0, s - 5));
           }
         } else {
@@ -145,7 +158,7 @@ const TypingDefender: React.FC = () => {
           } else {
              // Wrong key (no word starts with this)
              setErrorFlash(true);
-             setTimeout(() => setErrorFlash(false), 150);
+             addTimeout(() => setErrorFlash(false), 150);
              setScore(s => Math.max(0, s - 5));
           }
         }

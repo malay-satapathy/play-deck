@@ -34,6 +34,19 @@ const WordMaster: React.FC = () => {
   
   const { addXp } = useGlobalState();
   const isProcessingRef = useRef(false);
+  const timeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const addTimeout = useCallback((fn: () => void, delay: number) => {
+    const id = setTimeout(fn, delay);
+    timeoutRefs.current.push(id);
+    return id;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      timeoutRefs.current.forEach(clearTimeout);
+    };
+  }, []);
   const restartBtnRef = useRef<HTMLButtonElement>(null);
 
   const initGame = useCallback(() => {
@@ -89,13 +102,13 @@ const WordMaster: React.FC = () => {
     if (key === 'ENTER') {
       if (currentGuess.length !== WORD_LENGTH) {
         setIsShaking(true);
-        setTimeout(() => setIsShaking(false), 500);
+        addTimeout(() => setIsShaking(false), 500);
         return;
       }
       
       if (!VALID_WORDS.has(currentGuess)) {
         setIsShaking(true);
-        setTimeout(() => setIsShaking(false), 500);
+        addTimeout(() => setIsShaking(false), 500);
         return;
       }
       
@@ -106,7 +119,7 @@ const WordMaster: React.FC = () => {
       const evaluation = evaluateGuess(currentGuess, targetWord);
       
       // Reveal animation takes WORD_LENGTH * 300ms
-      setTimeout(() => {
+      addTimeout(() => {
         setGuesses(newGuesses);
         
         // Update keyboard state

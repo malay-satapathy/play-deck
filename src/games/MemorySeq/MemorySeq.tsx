@@ -36,6 +36,26 @@ const MemorySeq: React.FC = () => {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const activeOscRef = useRef<{ osc: OscillatorNode, gainNode: GainNode } | null>(null);
   const playbackRef = useRef<number>(0);
+  const timeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const addTimeout = useCallback((fn: () => void, delay: number) => {
+    const id = setTimeout(fn, delay);
+    timeoutRefs.current.push(id);
+    return id;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      playbackRef.current++; // Abort any ongoing sequence promises
+      timeoutRefs.current.forEach(clearTimeout);
+      if (activeOscRef.current) {
+        try { activeOscRef.current.osc.stop(); } catch(e) {}
+      }
+      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+        audioCtxRef.current.close();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -79,8 +99,8 @@ const MemorySeq: React.FC = () => {
 
   const playTone = useCallback((freq: number, durationMs: number, type: OscillatorType = 'sine') => {
     startTone(freq, type);
-    setTimeout(() => stopTone(), durationMs);
-  }, [startTone, stopTone]);
+    addTimeout(() => stopTone(), durationMs);
+  }, [startTone, stopTone, addTimeout]);
 
   const initGame = useCallback(() => {
     if (!audioCtxRef.current) {
@@ -167,10 +187,10 @@ const MemorySeq: React.FC = () => {
         if (nextStep === sequence.length) {
           setGameStatus('WAIT');
           // Level up chime
-          setTimeout(() => playTone(659.25, 150, 'sine'), 200); // E5
-          setTimeout(() => playTone(1046.50, 250, 'sine'), 350); // C6
+          addTimeout(() => playTone(659.25, 150, 'sine'), 200); // E5
+          addTimeout(() => playTone(1046.50, 250, 'sine'), 350); // C6
           
-          setTimeout(() => {
+          addTimeout(() => {
             setSequence(seq => [...seq, Math.floor(Math.random() * 4)]);
             setPlayerStep(0);
             setGameStatus('WATCH');

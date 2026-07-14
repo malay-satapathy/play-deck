@@ -202,7 +202,10 @@ const Hub: React.FC = () => {
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      if (wheelTimeout.current) clearTimeout(wheelTimeout.current);
+    };
   }, []);
 
   // Wheel/touch navigation

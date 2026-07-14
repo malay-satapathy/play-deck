@@ -32,6 +32,19 @@ const CosmicMiner: React.FC = () => {
   const asteroidIdCounter = useRef(0);
   const particleIdCounter = useRef(0);
   const gameAreaRef = useRef<HTMLDivElement>(null);
+  const timeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const addTimeout = useCallback((fn: () => void, delay: number) => {
+    const id = setTimeout(fn, delay);
+    timeoutRefs.current.push(id);
+    return id;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      timeoutRefs.current.forEach(clearTimeout);
+    };
+  }, []);
   
   const spawnAsteroid = useCallback(() => {
     const x = 10 + Math.random() * 80;
@@ -110,7 +123,7 @@ const CosmicMiner: React.FC = () => {
     setParticles(prev => [...prev, { id: pId, left, top, xp: gotXp }]);
     
     // Safely remove particle later
-    setTimeout(() => {
+    addTimeout(() => {
       setParticles(prev => prev.filter(p => p.id !== pId));
     }, 600);
     
@@ -122,7 +135,7 @@ const CosmicMiner: React.FC = () => {
     if (!isPlaying) return;
     setTimeLeft(prev => Math.max(0, prev - 1)); // -1 second penalty
     setMissFlash(true);
-    setTimeout(() => setMissFlash(false), 150);
+    addTimeout(() => setMissFlash(false), 150);
   };
 
   return (

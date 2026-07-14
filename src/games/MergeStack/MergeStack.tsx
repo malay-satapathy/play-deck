@@ -134,12 +134,19 @@ const MergeStack: React.FC = () => {
   const gameOverRef = useRef(false);
   const hasWonRef = useRef(false);
   const keepPlayingRef = useRef(false);
+  const timeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
   
   useEffect(() => { tilesRef.current = tiles; }, [tiles]);
   useEffect(() => { scoreRef.current = score; }, [score]);
   useEffect(() => { gameOverRef.current = gameOver; }, [gameOver]);
   useEffect(() => { hasWonRef.current = hasWon; }, [hasWon]);
   useEffect(() => { keepPlayingRef.current = keepPlaying; }, [keepPlaying]);
+  
+  useEffect(() => {
+    return () => {
+      timeoutRefs.current.forEach(clearTimeout);
+    };
+  }, []);
 
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const { addXp } = useGlobalState();
@@ -210,9 +217,10 @@ const MergeStack: React.FC = () => {
       setTiles(finalTiles);
       setScore(s => s + scoreInc);
       
-      setTimeout(() => {
+      const t = setTimeout(() => {
         setTiles(curr => curr.filter(t => !t.mergedInto));
       }, 150);
+      timeoutRefs.current.push(t);
       
       if (checkNoMoves(finalTiles)) {
         handleGameOver(scoreRef.current + scoreInc);
