@@ -221,12 +221,34 @@ const Hub: React.FC = () => {
     }
   };
 
+  // Touch navigation
+  const touchStartX = useRef<number>(0);
+  
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX.current - touchEndX;
+
+    if (diff > 50) {
+      // Swiped left, go next
+      setActiveIndex(prev => Math.min(prev + 1, GAMES.length - 1));
+    } else if (diff < -50) {
+      // Swiped right, go prev
+      setActiveIndex(prev => Math.max(prev - 1, 0));
+    }
+  };
+
   const activeGame = GAMES[activeIndex];
 
   return (
     <div 
       className={styles.hubContainer} 
       onWheel={handleWheel}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       style={{ '--active-color': activeGame.color } as React.CSSProperties}
     >
       {/* Dynamic Background */}
@@ -238,7 +260,7 @@ const Hub: React.FC = () => {
       <header className={styles.hubHeader}>
         <div className={styles.titleArea}>
           <h1 className={styles.hubTitle}>Play-Deck</h1>
-          <p className={styles.hubSubtitle}>Use Arrow Keys or Scroll to Browse</p>
+          <p className={styles.hubSubtitle}>Step into the future of arcade gaming. Swipe, scroll, or deal your way through 22 handcrafted classics.</p>
         </div>
         <div className={`${styles.statsPanel} glass-panel`}>
           <div className={styles.statBox}>
