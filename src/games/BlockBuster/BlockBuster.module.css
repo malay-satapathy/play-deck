@@ -6,6 +6,9 @@
   align-items: center;
   background-color: #020617;
   padding: 80px 20px 40px;
+  touch-action: none;
+  overscroll-behavior: none;
+  user-select: none;
 }
 
 .gameBoard {
@@ -14,6 +17,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  position: relative;
 }
 
 .header {
