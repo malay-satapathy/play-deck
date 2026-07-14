@@ -3,10 +3,10 @@ import BackButton from '../../core/components/BackButton';
 import { useGlobalState } from '../../core/store/GlobalContext';
 import styles from './MazeMuncher.module.css';
 
-// 0: path+dot, 1: wall, 2: empty path
+// 0: path+dot, 1: wall, 2: empty path, 3: power pellet
 const INITIAL_MAZE = [
   [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-  [1,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
+  [1,3,0,0,0,0,0,1,0,0,0,0,0,3,1],
   [1,0,1,1,0,1,0,1,0,1,0,1,1,0,1],
   [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
   [1,0,1,1,0,1,1,1,1,1,0,1,1,0,1],
@@ -17,7 +17,7 @@ const INITIAL_MAZE = [
   [1,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
   [1,0,1,1,1,1,0,1,0,1,1,1,1,0,1],
   [1,0,0,0,0,1,0,0,0,1,0,0,0,0,1],
-  [1,1,1,1,0,1,0,1,0,1,0,1,1,1,1],
+  [1,3,1,1,0,1,0,1,0,1,0,1,1,3,1],
   [1,0,0,0,0,0,0,1,0,0,0,0,0,0,1],
   [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 ];
@@ -38,7 +38,7 @@ const DIRS = {
   NONE: { x: 0, y: 0 }
 };
 
-type Entity = { x: number, y: number, dir: Dir, nextDir: Dir, type?: string };
+type Entity = { x: number, y: number, dir: Dir, nextDir: Dir, type?: string, frightenedTime?: number, startX?: number, startY?: number };
 
 const MazeMuncher: React.FC = () => {
   const [score, setScore] = useState(0);
@@ -53,26 +53,22 @@ const MazeMuncher: React.FC = () => {
     maze: [] as number[][],
     dotsCount: 0,
     player: { x: 7 * CELL_SIZE, y: 11 * CELL_SIZE, dir: DIRS.NONE, nextDir: DIRS.NONE } as Entity,
-    ghosts: [
-      { x: 6 * CELL_SIZE, y: 7 * CELL_SIZE, dir: DIRS.RIGHT, nextDir: DIRS.RIGHT, type: 'red' },
-      { x: 7 * CELL_SIZE, y: 7 * CELL_SIZE, dir: DIRS.UP, nextDir: DIRS.UP, type: 'pink' },
-      { x: 8 * CELL_SIZE, y: 7 * CELL_SIZE, dir: DIRS.LEFT, nextDir: DIRS.LEFT, type: 'cyan' },
-    ] as Entity[]
+    ghosts: [] as Entity[]
   });
 
   const initGame = () => {
     const maze = INITIAL_MAZE.map(row => [...row]);
     let dots = 0;
-    maze.forEach(row => row.forEach(c => { if (c === 0) dots++; }));
+    maze.forEach(row => row.forEach(c => { if (c === 0 || c === 3) dots++; }));
     
     gameState.current = {
       maze,
       dotsCount: dots,
       player: { x: 7 * CELL_SIZE, y: 11 * CELL_SIZE, dir: DIRS.NONE, nextDir: DIRS.NONE },
       ghosts: [
-        { x: 6 * CELL_SIZE, y: 7 * CELL_SIZE, dir: DIRS.RIGHT, nextDir: DIRS.RIGHT, type: 'red' },
-        { x: 7 * CELL_SIZE, y: 7 * CELL_SIZE, dir: DIRS.UP, nextDir: DIRS.UP, type: 'pink' },
-        { x: 8 * CELL_SIZE, y: 7 * CELL_SIZE, dir: DIRS.LEFT, nextDir: DIRS.LEFT, type: 'cyan' },
+        { x: 6 * CELL_SIZE, y: 7 * CELL_SIZE, dir: DIRS.RIGHT, nextDir: DIRS.RIGHT, type: 'red', frightenedTime: 0, startX: 6 * CELL_SIZE, startY: 7 * CELL_SIZE },
+        { x: 7 * CELL_SIZE, y: 7 * CELL_SIZE, dir: DIRS.UP, nextDir: DIRS.UP, type: 'pink', frightenedTime: 0, startX: 7 * CELL_SIZE, startY: 7 * CELL_SIZE },
+        { x: 8 * CELL_SIZE, y: 7 * CELL_SIZE, dir: DIRS.LEFT, nextDir: DIRS.LEFT, type: 'cyan', frightenedTime: 0, startX: 8 * CELL_SIZE, startY: 7 * CELL_SIZE },
       ]
     };
     setScore(0);
@@ -130,16 +126,28 @@ const MazeMuncher: React.FC = () => {
     const state = gameState.current;
 
     moveEntity(state.player, SPEED, true);
-    state.ghosts.forEach(g => moveEntity(g, SPEED - 0.5, false)); // slightly slower
+    state.ghosts.forEach(g => {
+      if (g.frightenedTime && g.frightenedTime > 0) {
+        g.frightenedTime--;
+        moveEntity(g, SPEED - 1, false);
+      } else {
+        moveEntity(g, SPEED - 0.5, false);
+      }
+    });
 
-    // Eat dot
+    // Eat dot or power pellet
     if (state.player.x % CELL_SIZE === 0 && state.player.y % CELL_SIZE === 0) {
       const cx = state.player.x / CELL_SIZE;
       const cy = state.player.y / CELL_SIZE;
-      if (cx >= 0 && cx < COLS && state.maze[cy][cx] === 0) {
+      if (cx >= 0 && cx < COLS && (state.maze[cy][cx] === 0 || state.maze[cy][cx] === 3)) {
+        const isPower = state.maze[cy][cx] === 3;
         state.maze[cy][cx] = 2; // clear
         state.dotsCount--;
-        setScore(s => s + 10);
+        setScore(s => s + (isPower ? 50 : 10));
+        
+        if (isPower) {
+          state.ghosts.forEach(g => g.frightenedTime = 600); // ~10s at 60fps
+        }
         
         if (state.dotsCount === 0) {
           setWin(true);
@@ -153,9 +161,16 @@ const MazeMuncher: React.FC = () => {
     for (let g of state.ghosts) {
       const dist = Math.abs(g.x - state.player.x) + Math.abs(g.y - state.player.y);
       if (dist < CELL_SIZE - 5) {
-        setGameOver(true);
-        addXp(Math.floor(score / 5));
-        return;
+        if (g.frightenedTime && g.frightenedTime > 0) {
+          g.x = g.startX!;
+          g.y = g.startY!;
+          g.frightenedTime = 0;
+          setScore(s => s + 200);
+        } else {
+          setGameOver(true);
+          addXp(Math.floor(score / 5));
+          return;
+        }
       }
     }
   }, [gameOver, win, score, addXp]);
@@ -180,6 +195,11 @@ const MazeMuncher: React.FC = () => {
           ctx.beginPath();
           ctx.arc(c * CELL_SIZE + CELL_SIZE/2, r * CELL_SIZE + CELL_SIZE/2, 3, 0, Math.PI * 2);
           ctx.fill();
+        } else if (state.maze[r][c] === 3) {
+          ctx.fillStyle = '#fef08a'; // Power pellet
+          ctx.beginPath();
+          ctx.arc(c * CELL_SIZE + CELL_SIZE/2, r * CELL_SIZE + CELL_SIZE/2, 7, 0, Math.PI * 2);
+          ctx.fill();
         }
       }
     }
@@ -187,13 +207,34 @@ const MazeMuncher: React.FC = () => {
     // Draw Player
     ctx.fillStyle = '#eab308'; // Pacman Yellow
     ctx.beginPath();
-    ctx.arc(state.player.x + CELL_SIZE/2, state.player.y + CELL_SIZE/2, CELL_SIZE/2 - 4, 0.2 * Math.PI, 1.8 * Math.PI);
+    let angle = 0;
+    if (state.player.dir === DIRS.RIGHT) angle = 0;
+    else if (state.player.dir === DIRS.DOWN) angle = 0.5 * Math.PI;
+    else if (state.player.dir === DIRS.LEFT) angle = Math.PI;
+    else if (state.player.dir === DIRS.UP) angle = 1.5 * Math.PI;
+    else if (state.player.nextDir === DIRS.RIGHT) angle = 0; // Fallback
+    else if (state.player.nextDir === DIRS.DOWN) angle = 0.5 * Math.PI;
+    else if (state.player.nextDir === DIRS.LEFT) angle = Math.PI;
+    else if (state.player.nextDir === DIRS.UP) angle = 1.5 * Math.PI;
+    
+    // Add simple chomping animation using Date.now()
+    const chomp = state.player.dir !== DIRS.NONE ? (Math.sin(Date.now() / 80) + 1) * 0.15 : 0.2; 
+    
+    ctx.arc(
+      state.player.x + CELL_SIZE/2, 
+      state.player.y + CELL_SIZE/2, 
+      CELL_SIZE/2 - 4, 
+      angle + chomp * Math.PI, 
+      angle + (2 - chomp) * Math.PI
+    );
     ctx.lineTo(state.player.x + CELL_SIZE/2, state.player.y + CELL_SIZE/2);
     ctx.fill();
 
     // Draw Ghosts
     state.ghosts.forEach(g => {
-      ctx.fillStyle = g.type === 'red' ? '#ef4444' : g.type === 'pink' ? '#f472b6' : '#22d3ee';
+      ctx.fillStyle = (g.frightenedTime && g.frightenedTime > 0) 
+        ? '#3b82f6' // Frightened blue
+        : (g.type === 'red' ? '#ef4444' : g.type === 'pink' ? '#f472b6' : '#22d3ee');
       ctx.beginPath();
       const gx = g.x + CELL_SIZE/2;
       const gy = g.y + CELL_SIZE/2;
@@ -207,7 +248,7 @@ const MazeMuncher: React.FC = () => {
       ctx.fillStyle = 'white';
       ctx.beginPath(); ctx.arc(gx - 4, gy - 2, 3, 0, Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.arc(gx + 4, gy - 2, 3, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = 'blue';
+      ctx.fillStyle = (g.frightenedTime && g.frightenedTime > 0) ? 'transparent' : 'blue';
       ctx.beginPath(); ctx.arc(gx - 4 + g.dir.x, gy - 2 + g.dir.y, 1.5, 0, Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.arc(gx + 4 + g.dir.x, gy - 2 + g.dir.y, 1.5, 0, Math.PI*2); ctx.fill();
     });
