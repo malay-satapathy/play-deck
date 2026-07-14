@@ -1,0 +1,131 @@
+.gameContainer {
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #020617;
+  padding: 80px 20px 40px;
+}
+
+.gameBoard {
+  width: 100%;
+  max-width: 450px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
+.header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h2 {
+  color: #f472b6;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 15px rgba(244, 114, 182, 0.5);
+}
+
+.scoreBoard {
+  background: rgba(244, 114, 182, 0.2);
+  color: #f472b6;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1.2rem;
+  border: 1px solid rgba(244, 114, 182, 0.3);
+}
+
+.canvasContainer {
+  position: relative;
+  width: 100%;
+  background: #020617;
+  border: 4px solid #4c1d95;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(76, 29, 149, 0.5);
+}
+
+.canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2/3; /* 400x600 */
+  display: block;
+}
+
+.gameOverOverlay {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(2, 6, 23, 0.95);
+  padding: 40px 60px;
+  border-radius: 20px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 20;
+}
+
+.gameOverOverlay h2 {
+  font-size: 2.5rem;
+  color: #ef4444;
+  margin-bottom: 8px;
+}
+
+.gameOverOverlay p {
+  color: #e2e8f0;
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+}
+
+.restartBtn {
+  margin-top: 16px;
+  background: #f472b6;
+  color: #0f172a;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.restartBtn:hover {
+  background: #db2777;
+  transform: translateY(-2px);
+}
+
+.mobileControls {
+  display: none;
+  width: 100%;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.controlBtn {
+  flex: 1;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f472b6;
+  border-radius: 12px;
+  height: 60px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.controlBtn:active {
+  background: rgba(244, 114, 182, 0.2);
+}
+
+@media (max-width: 768px) {
+  .mobileControls {
+    display: flex;
+  }
+}

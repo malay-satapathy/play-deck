@@ -1,0 +1,135 @@
+.gameContainer {
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #020617;
+  padding: 80px 20px 40px;
+}
+
+.gameBoard {
+  width: 100%;
+  max-width: 550px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
+.header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h2 {
+  color: #3b82f6;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+}
+
+.turnIndicator {
+  background: rgba(30, 41, 59, 0.8);
+  color: #e2e8f0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.redText { color: #ef4444; }
+.yellowText { color: #eab308; }
+
+.gridContainer {
+  position: relative;
+  background: #1e3a8a; /* Classic blue board */
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.5);
+  width: 100%;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  gap: 10px;
+}
+
+.cellWrapper {
+  aspect-ratio: 1;
+  background: #020617; /* Background color simulating holes */
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: inset 0 5px 10px rgba(0,0,0,0.8);
+  padding: 4px;
+}
+
+.cellWrapper:hover {
+  background: #0f172a;
+}
+
+.cell {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.red {
+  background: radial-gradient(circle at 30% 30%, #fca5a5, #ef4444, #7f1d1d);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
+
+.yellow {
+  background: radial-gradient(circle at 30% 30%, #fef08a, #eab308, #713f12);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
+
+.gameOverOverlay {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(2, 6, 23, 0.95);
+  padding: 40px 60px;
+  border-radius: 20px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 20;
+}
+
+.gameOverOverlay h2 {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+
+.gameOverOverlay p {
+  color: #e2e8f0;
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+}
+
+.restartBtn {
+  margin-top: 16px;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.restartBtn:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+}

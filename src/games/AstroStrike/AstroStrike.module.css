@@ -1,0 +1,131 @@
+.gameContainer {
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #020617;
+  padding: 80px 20px 40px;
+}
+
+.gameBoard {
+  width: 100%;
+  max-width: 650px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h2 {
+  color: #c084fc;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  text-shadow: 0 0 15px rgba(192, 132, 252, 0.5);
+}
+
+.scoreBoard {
+  background: rgba(192, 132, 252, 0.2);
+  color: #c084fc;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1.2rem;
+  border: 1px solid rgba(192, 132, 252, 0.3);
+}
+
+.canvasContainer {
+  position: relative;
+  width: 100%;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+}
+
+.canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1; /* 600x600 */
+  display: block;
+}
+
+.gameOverOverlay {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(2, 6, 23, 0.95);
+  padding: 40px 60px;
+  border-radius: 20px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 20;
+}
+
+.gameOverOverlay h2 {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+
+.gameOverOverlay p {
+  color: #94a3b8;
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+}
+
+.restartBtn {
+  margin-top: 16px;
+  background: #c084fc;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.restartBtn:hover {
+  background: #a855f7;
+  transform: translateY(-2px);
+}
+
+.mobileControls {
+  display: none;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.controlBtn {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #c084fc;
+  border-radius: 12px;
+  height: 60px;
+  font-size: 2rem;
+  cursor: pointer;
+}
+
+.controlBtn:active {
+  background: rgba(192, 132, 252, 0.2);
+}
+
+.fireBtn {
+  font-size: 1.2rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+@media (max-width: 600px) {
+  .mobileControls {
+    display: grid;
+  }
+}

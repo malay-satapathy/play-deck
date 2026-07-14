@@ -1,0 +1,141 @@
+.gameContainer {
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #020617;
+  padding: 80px 20px 40px;
+}
+
+.gameBoard {
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
+.header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h2 {
+  color: #4ade80;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 15px rgba(74, 222, 128, 0.5);
+}
+
+.stats {
+  display: flex;
+  gap: 12px;
+  background: rgba(74, 222, 128, 0.2);
+  color: #4ade80;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1rem;
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.canvasContainer {
+  position: relative;
+  width: 100%;
+  background: #020617;
+  border: 4px solid #1e293b;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(74, 222, 128, 0.2);
+}
+
+.canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 5/6; /* 500x600 */
+  display: block;
+}
+
+.gameOverOverlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(2, 6, 23, 0.95);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  z-index: 20;
+}
+
+.gameOverOverlay h2 {
+  font-size: 2.5rem;
+  color: #ef4444;
+  margin-bottom: 8px;
+}
+
+.gameOverOverlay p {
+  color: #e2e8f0;
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+}
+
+.restartBtn {
+  margin-top: 16px;
+  background: #4ade80;
+  color: #0f172a;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.restartBtn:hover {
+  background: #22c55e;
+  transform: translateY(-2px);
+}
+
+/* Touch controls for mobile */
+.dpad {
+  display: none;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+  width: 100%;
+  max-width: 250px;
+}
+
+.dpadBtn {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #4ade80;
+  border-radius: 12px;
+  height: 60px;
+  font-size: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.dpadBtn:active {
+  background: rgba(74, 222, 128, 0.2);
+}
+
+.up { grid-column: 2; }
+.left { grid-column: 1; }
+.down { grid-column: 2; }
+.right { grid-column: 3; }
+
+@media (max-width: 768px) {
+  .dpad {
+    display: grid;
+  }
+}

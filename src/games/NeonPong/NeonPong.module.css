@@ -1,0 +1,212 @@
+.gameContainer {
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #020617;
+  padding: 80px 20px 40px;
+}
+
+.menuBox {
+  background: rgba(30, 41, 59, 0.8);
+  backdrop-filter: blur(12px);
+  padding: 40px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.menuBox h1 {
+  font-size: 3rem;
+  color: #06b6d4;
+  text-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+  margin-bottom: 8px;
+}
+
+.menuBox p {
+  color: #94a3b8;
+  margin-bottom: 32px;
+  font-size: 1.2rem;
+}
+
+.modeButtons {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+}
+
+.modeBtn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 160px;
+}
+
+.modeBtn:hover {
+  background: rgba(6, 182, 212, 0.2);
+  border-color: rgba(6, 182, 212, 0.5);
+  transform: translateY(-4px);
+}
+
+.gameBoard {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  position: relative;
+}
+
+.scoreBoard {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 4rem;
+  font-weight: 900;
+  padding: 0 40px;
+}
+
+.p1Score {
+  color: #06b6d4;
+  text-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+}
+
+.p2Score {
+  color: #ec4899;
+  text-shadow: 0 0 20px rgba(236, 72, 153, 0.5);
+}
+
+.title {
+  font-size: 1.5rem;
+  color: #334155;
+  letter-spacing: 10px;
+}
+
+.canvasContainer {
+  position: relative;
+  width: 100%;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+}
+
+.canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 8/5; /* 800x500 */
+  display: block;
+}
+
+.touchZones {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  z-index: 10;
+}
+
+.touchLeft {
+  flex: 1;
+  height: 100%;
+}
+.touchRight {
+  flex: 1;
+  height: 100%;
+}
+
+.gameOverOverlay {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(2, 6, 23, 0.95);
+  padding: 40px 60px;
+  border-radius: 20px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 20;
+}
+
+.gameOverOverlay h2 {
+  font-size: 2.5rem;
+  color: #f8fafc;
+  margin-bottom: 8px;
+}
+
+.gameOverOverlay p {
+  color: #10b981;
+  font-size: 1.2rem;
+  margin-bottom: 24px;
+}
+
+.endButtons {
+  display: flex;
+  gap: 16px;
+}
+
+.restartBtn {
+  background: #06b6d4;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.restartBtn:hover {
+  background: #0891b2;
+  transform: translateY(-2px);
+}
+
+.menuReturnBtn {
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.menuReturnBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.controlsHelp {
+  color: #475569;
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+}
+
+@media (max-width: 600px) {
+  .modeButtons {
+    flex-direction: column;
+  }
+  .scoreBoard {
+    font-size: 2.5rem;
+    padding: 0 16px;
+  }
+  .title {
+    font-size: 1rem;
+    letter-spacing: 4px;
+  }
+  .controlsHelp {
+    display: none; /* Mobile uses touch */
+  }
+}

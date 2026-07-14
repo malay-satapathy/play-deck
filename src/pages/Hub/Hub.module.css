@@ -124,6 +124,7 @@
 .cardContent {
   text-align: center;
   margin-top: auto;
+  padding: 0 24px 20px 24px; /* added padding to prevent overlap */
 }
 
 .cardContent h3 {
