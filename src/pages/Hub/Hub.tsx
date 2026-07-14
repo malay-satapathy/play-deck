@@ -260,7 +260,7 @@ const Hub: React.FC = () => {
       <header className={styles.hubHeader}>
         <div className={styles.titleArea}>
           <h1 className={styles.hubTitle}>Play-Deck</h1>
-          <p className={styles.hubSubtitle}>Step into the future of arcade gaming. Swipe, scroll, or deal your way through 22 handcrafted classics.</p>
+          <p className={styles.hubSubtitle}>Step into the world of Arcade Games.</p>
         </div>
         <div className={`${styles.statsPanel} glass-panel`}>
           <div className={styles.statBox}>
