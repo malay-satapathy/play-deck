@@ -11,6 +11,7 @@ const PADDLE_HEIGHT = 100;
 const BALL_SIZE = 15;
 const PADDLE_SPEED = 8;
 const INITIAL_BALL_SPEED = 6;
+const MAX_BOUNCE_ANGLE = Math.PI / 4; // 45 degrees
 
 type Mode = '1P' | '2P' | null;
 
@@ -21,69 +22,93 @@ const NeonPong: React.FC = () => {
   
   const { addXp } = useGlobalState();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const requestRef = useRef<number>(0);
+  const lastTimeRef = useRef<number>(performance.now());
   
   const gameState = useRef({
     p1: { y: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2, score: 0 },
     p2: { y: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2, score: 0 },
     ball: { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2, vx: INITIAL_BALL_SPEED, vy: INITIAL_BALL_SPEED },
-    keys: { w: false, s: false, up: false, down: false }
+    keys: { w: false, s: false, up: false, down: false },
+    gameOverTriggered: false
   });
 
-  const resetBall = () => {
+  const resetBall = useCallback(() => {
     gameState.current.ball = {
-      x: CANVAS_WIDTH / 2,
-      y: CANVAS_HEIGHT / 2,
+      x: CANVAS_WIDTH / 2 - BALL_SIZE / 2,
+      y: CANVAS_HEIGHT / 2 - BALL_SIZE / 2,
       vx: (Math.random() > 0.5 ? 1 : -1) * INITIAL_BALL_SPEED,
       vy: (Math.random() > 0.5 ? 1 : -1) * INITIAL_BALL_SPEED
     };
-  };
+  }, []);
 
   const update = useCallback((dt: number) => {
     if (gameOver) return;
     const state = gameState.current;
     
     // Player 1 Movement (W/S)
-    if (state.keys.w && state.p1.y > 0) state.p1.y -= PADDLE_SPEED * dt;
-    if (state.keys.s && state.p1.y < CANVAS_HEIGHT - PADDLE_HEIGHT) state.p1.y += PADDLE_SPEED * dt;
+    if (state.keys.w) state.p1.y -= PADDLE_SPEED * dt;
+    if (state.keys.s) state.p1.y += PADDLE_SPEED * dt;
 
     // Player 2 / Bot Movement
     if (mode === '2P') {
-      if (state.keys.up && state.p2.y > 0) state.p2.y -= PADDLE_SPEED * dt;
-      if (state.keys.down && state.p2.y < CANVAS_HEIGHT - PADDLE_HEIGHT) state.p2.y += PADDLE_SPEED * dt;
+      if (state.keys.up) state.p2.y -= PADDLE_SPEED * dt;
+      if (state.keys.down) state.p2.y += PADDLE_SPEED * dt;
     } else if (mode === '1P') {
       // Simple Bot AI
       const botCenter = state.p2.y + PADDLE_HEIGHT / 2;
-      if (botCenter < state.ball.y - 10 && state.p2.y < CANVAS_HEIGHT - PADDLE_HEIGHT) {
-        state.p2.y += PADDLE_SPEED * 0.7 * dt; // slightly slower than player
-      } else if (botCenter > state.ball.y + 10 && state.p2.y > 0) {
+      if (botCenter < state.ball.y - 10) {
+        state.p2.y += PADDLE_SPEED * 0.7 * dt;
+      } else if (botCenter > state.ball.y + 10) {
         state.p2.y -= PADDLE_SPEED * 0.7 * dt;
       }
     }
+
+    // Clamp paddle positions
+    state.p1.y = Math.max(0, Math.min(CANVAS_HEIGHT - PADDLE_HEIGHT, state.p1.y));
+    state.p2.y = Math.max(0, Math.min(CANVAS_HEIGHT - PADDLE_HEIGHT, state.p2.y));
 
     // Ball movement
     state.ball.x += state.ball.vx * dt;
     state.ball.y += state.ball.vy * dt;
 
     // Wall collision (top/bottom)
-    if (state.ball.y <= 0 || state.ball.y >= CANVAS_HEIGHT - BALL_SIZE) {
+    if (state.ball.y <= 0 && state.ball.vy < 0) {
       state.ball.vy *= -1;
+      state.ball.y = 0;
+    }
+    if (state.ball.y >= CANVAS_HEIGHT - BALL_SIZE && state.ball.vy > 0) {
+      state.ball.vy *= -1;
+      state.ball.y = CANVAS_HEIGHT - BALL_SIZE;
     }
 
     // Paddle collision
     // P1
-    if (state.ball.x <= PADDLE_WIDTH && state.ball.y + BALL_SIZE >= state.p1.y && state.ball.y <= state.p1.y + PADDLE_HEIGHT) {
-      state.ball.vx = Math.abs(state.ball.vx) + 0.5; // speed up slightly
+    if (state.ball.x <= PADDLE_WIDTH && state.ball.x + BALL_SIZE >= 0 && state.ball.y + BALL_SIZE >= state.p1.y && state.ball.y <= state.p1.y + PADDLE_HEIGHT && state.ball.vx < 0) {
+      let relativeIntersectY = (state.p1.y + (PADDLE_HEIGHT / 2)) - (state.ball.y + (BALL_SIZE / 2));
+      let normalizedRelativeIntersectionY = (relativeIntersectY / (PADDLE_HEIGHT / 2));
+      let bounceAngle = normalizedRelativeIntersectionY * MAX_BOUNCE_ANGLE;
+      let speed = Math.sqrt(state.ball.vx * state.ball.vx + state.ball.vy * state.ball.vy) + 0.5;
+      
+      state.ball.vx = speed * Math.cos(bounceAngle);
+      state.ball.vy = speed * -Math.sin(bounceAngle);
       state.ball.x = PADDLE_WIDTH; // prevent clipping
     }
     // P2
-    if (state.ball.x + BALL_SIZE >= CANVAS_WIDTH - PADDLE_WIDTH && state.ball.y + BALL_SIZE >= state.p2.y && state.ball.y <= state.p2.y + PADDLE_HEIGHT) {
-      state.ball.vx = -Math.abs(state.ball.vx) - 0.5;
+    if (state.ball.x + BALL_SIZE >= CANVAS_WIDTH - PADDLE_WIDTH && state.ball.x <= CANVAS_WIDTH && state.ball.y + BALL_SIZE >= state.p2.y && state.ball.y <= state.p2.y + PADDLE_HEIGHT && state.ball.vx > 0) {
+      let relativeIntersectY = (state.p2.y + (PADDLE_HEIGHT / 2)) - (state.ball.y + (BALL_SIZE / 2));
+      let normalizedRelativeIntersectionY = (relativeIntersectY / (PADDLE_HEIGHT / 2));
+      let bounceAngle = normalizedRelativeIntersectionY * MAX_BOUNCE_ANGLE;
+      let speed = Math.sqrt(state.ball.vx * state.ball.vx + state.ball.vy * state.ball.vy) + 0.5;
+      
+      state.ball.vx = speed * -Math.cos(bounceAngle);
+      state.ball.vy = speed * -Math.sin(bounceAngle);
       state.ball.x = CANVAS_WIDTH - PADDLE_WIDTH - BALL_SIZE;
     }
 
     // Scoring
-    if (state.ball.x < 0) {
+    if (state.ball.x + BALL_SIZE < 0) {
       state.p2.score++;
       setScore({ p1: state.p1.score, p2: state.p2.score });
       resetBall();
@@ -94,15 +119,18 @@ const NeonPong: React.FC = () => {
     }
 
     // Win condition (First to 5)
-    if (state.p1.score >= 5 || state.p2.score >= 5) {
+    if ((state.p1.score >= 5 || state.p2.score >= 5) && !state.gameOverTriggered) {
+      state.gameOverTriggered = true;
       setGameOver(true);
       if (state.p1.score >= 5) addXp(25); // Player 1 wins
       if (mode === '2P' && state.p2.score >= 5) addXp(25); // P2 wins in 2P mode
     }
 
-  }, [mode, gameOver, addXp]);
+  }, [mode, gameOver, addXp, resetBall]);
 
-  const draw = useCallback((ctx: CanvasRenderingContext2D) => {
+  const draw = useCallback(() => {
+    const ctx = ctxRef.current;
+    if (!ctx) return;
     const state = gameState.current;
 
     // Clear
@@ -138,31 +166,29 @@ const NeonPong: React.FC = () => {
     ctx.shadowBlur = 0; // reset for next frame
   }, []);
 
-  const lastTimeRef = useRef<number>(performance.now());
-
   const loop = useCallback((timestamp: number) => {
-    if (!gameOver && mode) {
-      const dt = (timestamp - lastTimeRef.current) / 16.666;
-      lastTimeRef.current = timestamp;
+    if (gameOver || !mode) return;
+    
+    // Clamp delta time to avoid tunneling on large lag spikes
+    const dt = Math.min((timestamp - lastTimeRef.current) / 16.666, 2.0);
+    lastTimeRef.current = timestamp;
 
-      update(dt);
-      const canvas = canvasRef.current;
-      if (canvas) {
-        const ctx = canvas.getContext('2d');
-        if (ctx) draw(ctx);
-      }
-    } else {
-      lastTimeRef.current = timestamp;
-    }
+    update(dt);
+    draw();
+    
     requestRef.current = requestAnimationFrame(loop);
   }, [update, draw, gameOver, mode]);
 
   useEffect(() => {
-    if (mode) {
+    if (canvasRef.current && !ctxRef.current) {
+       ctxRef.current = canvasRef.current.getContext('2d');
+    }
+    if (mode && !gameOver) {
+      lastTimeRef.current = performance.now();
       requestRef.current = requestAnimationFrame(loop);
     }
     return () => cancelAnimationFrame(requestRef.current);
-  }, [loop, mode]);
+  }, [loop, mode, gameOver]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -191,6 +217,7 @@ const NeonPong: React.FC = () => {
   const restart = () => {
     gameState.current.p1.score = 0;
     gameState.current.p2.score = 0;
+    gameState.current.gameOverTriggered = false;
     setScore({ p1: 0, p2: 0 });
     setGameOver(false);
     resetBall();
@@ -220,6 +247,8 @@ const NeonPong: React.FC = () => {
 
   // Mobile Touch Controls
   const handleTouch = (player: 'p1'|'p2', e: React.TouchEvent) => {
+    // prevent default behavior to stop screen from scrolling
+    if (e.cancelable) e.preventDefault();
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
@@ -256,11 +285,13 @@ const NeonPong: React.FC = () => {
           <div className={styles.touchZones}>
             <div 
               className={styles.touchLeft} 
+              onTouchStart={(e) => handleTouch('p1', e)}
               onTouchMove={(e) => handleTouch('p1', e)}
             />
             {mode === '2P' && (
               <div 
                 className={styles.touchRight} 
+                onTouchStart={(e) => handleTouch('p2', e)}
                 onTouchMove={(e) => handleTouch('p2', e)}
               />
             )}
