@@ -325,10 +325,14 @@ const RiverHopper: React.FC = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowUp' || e.key === 'w') { e.preventDefault(); moveFrog(0, -1); }
-      if (e.key === 'ArrowDown' || e.key === 's') { e.preventDefault(); moveFrog(0, 1); }
-      if (e.key === 'ArrowLeft' || e.key === 'a') { e.preventDefault(); moveFrog(-1, 0); }
-      if (e.key === 'ArrowRight' || e.key === 'd') { e.preventDefault(); moveFrog(1, 0); }
+      const key = e.key.toLowerCase();
+      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
+        e.preventDefault();
+      }
+      if (key === 'arrowup' || key === 'w') moveFrog(0, -1);
+      if (key === 'arrowdown' || key === 's') moveFrog(0, 1);
+      if (key === 'arrowleft' || key === 'a') moveFrog(-1, 0);
+      if (key === 'arrowright' || key === 'd') moveFrog(1, 0);
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);

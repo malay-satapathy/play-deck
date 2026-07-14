@@ -282,19 +282,24 @@ const BlockBuster: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const state = gameState.current;
-      if (e.key === 'ArrowLeft' || e.key === 'a') state.keys.left = true;
-      if (e.key === 'ArrowRight' || e.key === 'd') state.keys.right = true;
-      if (e.key === ' ' && !state.started) {
+      const key = e.key.toLowerCase();
+      if (['arrowleft', 'arrowright', 'a', 'd', ' '].includes(key)) {
+        e.preventDefault();
+      }
+      if (key === 'arrowleft' || key === 'a') state.keys.left = true;
+      if (key === 'arrowright' || key === 'd') state.keys.right = true;
+      if (key === ' ' && !state.started) {
         state.started = true;
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
       const state = gameState.current;
-      if (e.key === 'ArrowLeft' || e.key === 'a') state.keys.left = false;
-      if (e.key === 'ArrowRight' || e.key === 'd') state.keys.right = false;
+      const key = e.key.toLowerCase();
+      if (key === 'arrowleft' || key === 'a') state.keys.left = false;
+      if (key === 'arrowright' || key === 'd') state.keys.right = false;
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, { passive: false });
     window.addEventListener('keyup', handleKeyUp);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);

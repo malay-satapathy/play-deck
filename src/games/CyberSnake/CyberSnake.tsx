@@ -239,13 +239,14 @@ const CyberSnake: React.FC = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      const key = e.key.toLowerCase();
+      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
         e.preventDefault();
       }
-      if (e.key === 'ArrowUp' || e.key === 'w') changeDirection('UP');
-      if (e.key === 'ArrowDown' || e.key === 's') changeDirection('DOWN');
-      if (e.key === 'ArrowLeft' || e.key === 'a') changeDirection('LEFT');
-      if (e.key === 'ArrowRight' || e.key === 'd') changeDirection('RIGHT');
+      if (key === 'arrowup' || key === 'w') changeDirection('UP');
+      if (key === 'arrowdown' || key === 's') changeDirection('DOWN');
+      if (key === 'arrowleft' || key === 'a') changeDirection('LEFT');
+      if (key === 'arrowright' || key === 'd') changeDirection('RIGHT');
     };
     
     window.addEventListener('keydown', handleKeyDown, { passive: false });

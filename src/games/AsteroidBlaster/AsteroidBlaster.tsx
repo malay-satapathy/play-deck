@@ -350,20 +350,22 @@ const AsteroidBlaster: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const state = gameState.current;
-      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', ' ', 'a', 'w', 'd'].includes(e.key)) {
+      const key = e.key.toLowerCase();
+      if (['arrowleft', 'arrowright', 'arrowup', ' ', 'a', 'w', 'd'].includes(key)) {
          e.preventDefault();
       }
-      if (e.key === 'ArrowLeft' || e.key === 'a') state.keys.left = true;
-      if (e.key === 'ArrowRight' || e.key === 'd') state.keys.right = true;
-      if (e.key === 'ArrowUp' || e.key === 'w') state.keys.up = true;
-      if (e.key === ' ') state.keys.space = true;
+      if (key === 'arrowleft' || key === 'a') state.keys.left = true;
+      if (key === 'arrowright' || key === 'd') state.keys.right = true;
+      if (key === 'arrowup' || key === 'w') state.keys.up = true;
+      if (key === ' ') state.keys.space = true;
     };
     const handleKeyUp = (e: KeyboardEvent) => {
       const state = gameState.current;
-      if (e.key === 'ArrowLeft' || e.key === 'a') state.keys.left = false;
-      if (e.key === 'ArrowRight' || e.key === 'd') state.keys.right = false;
-      if (e.key === 'ArrowUp' || e.key === 'w') state.keys.up = false;
-      if (e.key === ' ') state.keys.space = false;
+      const key = e.key.toLowerCase();
+      if (key === 'arrowleft' || key === 'a') state.keys.left = false;
+      if (key === 'arrowright' || key === 'd') state.keys.right = false;
+      if (key === 'arrowup' || key === 'w') state.keys.up = false;
+      if (key === ' ') state.keys.space = false;
     };
 
     window.addEventListener('keydown', handleKeyDown, { passive: false });

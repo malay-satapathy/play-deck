@@ -162,12 +162,15 @@ const NeonRider: React.FC = () => {
   // Event listeners in a separate useEffect
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') stateRef.current.keys.left = true;
-      if (e.key === 'ArrowRight') stateRef.current.keys.right = true;
+      const key = e.key.toLowerCase();
+      if (['arrowleft', 'arrowright', 'a', 'd'].includes(key)) e.preventDefault();
+      if (key === 'arrowleft' || key === 'a') stateRef.current.keys.left = true;
+      if (key === 'arrowright' || key === 'd') stateRef.current.keys.right = true;
     };
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') stateRef.current.keys.left = false;
-      if (e.key === 'ArrowRight') stateRef.current.keys.right = false;
+      const key = e.key.toLowerCase();
+      if (key === 'arrowleft' || key === 'a') stateRef.current.keys.left = false;
+      if (key === 'arrowright' || key === 'd') stateRef.current.keys.right = false;
     };
 
     window.addEventListener('keydown', handleKeyDown);

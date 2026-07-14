@@ -324,16 +324,17 @@ const TetraDrop: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (gameOver) return;
       // Prevent browser scrolling
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+      const key = e.key.toLowerCase();
+      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'w', 'a', 's', 'd'].includes(key)) {
         e.preventDefault();
       }
 
-      if (e.key === 'ArrowLeft') move(-1);
-      if (e.key === 'ArrowRight') move(1);
-      if (e.key === 'ArrowDown') drop(false);
-      if (e.key === 'ArrowUp') rotate();
-      if (e.key === ' ' || e.key === 'Enter') hardDrop();
-      if (e.key === 'c' || e.key === 'Shift') hold();
+      if (key === 'arrowleft' || key === 'a') move(-1);
+      if (key === 'arrowright' || key === 'd') move(1);
+      if (key === 'arrowdown' || key === 's') drop(false);
+      if (key === 'arrowup' || key === 'w') rotate();
+      if (key === ' ' || key === 'enter') hardDrop();
+      if (key === 'c' || e.key === 'Shift') hold();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);

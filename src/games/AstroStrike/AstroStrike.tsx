@@ -384,16 +384,18 @@ const AstroStrike: React.FC = () => {
   }, [loop, draw]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (['ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
-    if (e.key === 'ArrowLeft' || e.key === 'a') gameState.current.keys.left = true;
-    if (e.key === 'ArrowRight' || e.key === 'd') gameState.current.keys.right = true;
-    if (e.key === ' ' || e.key === 'w' || e.key === 'ArrowUp') gameState.current.keys.space = true;
+    const key = e.key.toLowerCase();
+    if (['arrowleft', 'arrowright', ' ', 'a', 'd', 'w', 'arrowup'].includes(key)) e.preventDefault();
+    if (key === 'arrowleft' || key === 'a') gameState.current.keys.left = true;
+    if (key === 'arrowright' || key === 'd') gameState.current.keys.right = true;
+    if (key === ' ' || key === 'w' || key === 'arrowup') gameState.current.keys.space = true;
   }, []);
 
   const handleKeyUp = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'ArrowLeft' || e.key === 'a') gameState.current.keys.left = false;
-    if (e.key === 'ArrowRight' || e.key === 'd') gameState.current.keys.right = false;
-    if (e.key === ' ' || e.key === 'w' || e.key === 'ArrowUp') gameState.current.keys.space = false;
+    const key = e.key.toLowerCase();
+    if (key === 'arrowleft' || key === 'a') gameState.current.keys.left = false;
+    if (key === 'arrowright' || key === 'd') gameState.current.keys.right = false;
+    if (key === ' ' || key === 'w' || key === 'arrowup') gameState.current.keys.space = false;
   }, []);
 
   useEffect(() => {
