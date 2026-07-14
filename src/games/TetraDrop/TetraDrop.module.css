@@ -6,11 +6,12 @@
   align-items: center;
   background-color: #020617;
   padding: 80px 20px 40px;
+  overflow: hidden; /* Prevent scrolling */
 }
 
 .gameBoard {
   width: 100%;
-  max-width: 400px;
+  max-width: 600px; /* Increased to fit side panels */
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -41,6 +42,43 @@
   border: 1px solid rgba(56, 189, 248, 0.3);
 }
 
+.playArea {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+}
+
+.sidePanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.sidePanel h3 {
+  color: #94a3b8;
+  text-transform: uppercase;
+  font-size: 1rem;
+  letter-spacing: 1px;
+}
+
+.box {
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+  min-width: 80px;
+  min-height: 80px;
+}
+
 .gridContainer {
   position: relative;
   background: rgba(2, 6, 23, 0.9);
@@ -48,7 +86,8 @@
   border-radius: 8px;
   border: 2px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 0 50px rgba(56, 189, 248, 0.2);
-  width: 100%;
+  flex: 2; /* Main grid takes more space */
+  max-width: 300px;
 }
 
 .grid {
@@ -65,6 +104,21 @@
   border-radius: 2px;
 }
 
+.miniGrid {
+  display: flex;
+  flex-direction: column;
+}
+
+.miniRow {
+  display: flex;
+}
+
+.miniCell {
+  width: 15px;
+  height: 15px;
+  border-radius: 2px;
+}
+
 .gameOverOverlay {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -74,6 +128,12 @@
   justify-content: center;
   align-items: center;
   border-radius: 6px;
+  animation: fadeIn 0.5s ease-out; /* Graceful fade in */
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .gameOverOverlay h2 {
@@ -110,11 +170,12 @@
 /* Touch controls for mobile */
 .dpad {
   display: none;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
   gap: 10px;
   margin-top: 10px;
   width: 100%;
-  max-width: 250px;
+  max-width: 320px;
 }
 
 .dpadBtn {
@@ -122,8 +183,8 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #38bdf8;
   border-radius: 12px;
-  height: 60px;
-  font-size: 2rem;
+  height: 50px;
+  font-size: 1.5rem;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -134,13 +195,33 @@
   background: rgba(56, 189, 248, 0.2);
 }
 
-.up { grid-column: 2; font-weight: bold; }
-.left { grid-column: 1; }
-.down { grid-column: 2; }
-.right { grid-column: 3; }
+.up { grid-column: 2; grid-row: 1; }
+.left { grid-column: 1; grid-row: 2; }
+.down { grid-column: 2; grid-row: 2; }
+.right { grid-column: 3; grid-row: 2; }
+.hardDrop { grid-column: 4; grid-row: 2; color: #ef4444; font-weight: bold; }
+.hold { grid-column: 4; grid-row: 1; color: #a855f7; font-weight: bold; }
 
 @media (max-width: 768px) {
   .dpad {
     display: grid;
+  }
+  .playArea {
+    /* Stack side panels differently on mobile to prevent overflow */
+    flex-wrap: wrap;
+    max-height: 50vh; /* Prevent vertical overflow pushing dpad out */
+  }
+  .gridContainer {
+    min-width: 200px;
+  }
+  .sidePanel {
+    order: 3; /* Move panels to bottom or side */
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-around;
+  }
+  .box {
+    flex-direction: row;
+    min-height: auto;
   }
 }
