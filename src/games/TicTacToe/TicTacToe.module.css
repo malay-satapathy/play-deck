@@ -71,6 +71,10 @@
 
 .header {
   text-align: center;
+  height: 60px; /* Fixed height to prevent layout shift during thinking */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .header h2 {
@@ -85,6 +89,29 @@
   font-size: 2rem;
   font-weight: bold;
   color: #f8fafc;
+}
+
+.turnText {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.thinking::after {
+  content: '';
+  animation: ellipsis 1.5s infinite steps(4, end);
+  display: inline-block;
+  width: 1.5em; /* reserve space */
+  text-align: left;
+}
+
+@keyframes ellipsis {
+  0% { content: ''; }
+  25% { content: '.'; }
+  50% { content: '..'; }
+  75% { content: '...'; }
+  100% { content: ''; }
 }
 
 .grid {
@@ -108,12 +135,41 @@
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, box-shadow 0.2s;
   font-family: 'Outfit', sans-serif;
+  position: relative;
+}
+
+/* Disabled cursor */
+.cell:disabled {
+  cursor: not-allowed;
+}
+
+/* Predictive Hover */
+.grid[data-turn="X"] .cell:hover:not(:disabled)::after {
+  content: 'X';
+  position: absolute;
+  color: rgba(59, 130, 246, 0.2);
+}
+
+.grid[data-turn="O"] .cell:hover:not(:disabled)::after {
+  content: 'O';
+  position: absolute;
+  color: rgba(239, 68, 68, 0.2);
 }
 
 .cell:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.1);
+}
+
+/* Appearance Animation */
+.popIn {
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .cell.x {
@@ -124,6 +180,22 @@
 .cell.o {
   color: #ef4444;
   text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+}
+
+/* Winning Highlight */
+.winningCell {
+  background: rgba(16, 185, 129, 0.2) !important;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+  color: #10b981 !important;
+  text-shadow: 0 0 20px rgba(16, 185, 129, 0.8) !important;
+  z-index: 10;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
 
 .restartBtn {
@@ -146,8 +218,8 @@
 
 .menuReturnBtn {
   background: transparent;
-  color: #94a3b8;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1; /* Slightly brighter baseline */
+  border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 12px 24px;
   border-radius: 8px;
   cursor: pointer;
@@ -156,7 +228,7 @@
 }
 
 .menuReturnBtn:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.1);
   color: white;
 }
 

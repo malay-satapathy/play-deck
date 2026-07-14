@@ -13,11 +13,21 @@ const WINNING_COMBOS = [
   [0, 4, 8], [2, 4, 6]             // diagonals
 ];
 
+interface GameState {
+  board: Player[];
+  xIsNext: boolean;
+  winner: Player | 'DRAW' | null;
+  winningCombo: number[] | null;
+}
+
 const TicTacToe: React.FC = () => {
   const [mode, setMode] = useState<Mode>(null);
-  const [board, setBoard] = useState<Player[]>(Array(9).fill(null));
-  const [xIsNext, setXIsNext] = useState(true);
-  const [winner, setWinner] = useState<Player | 'DRAW' | null>(null);
+  const [gameState, setGameState] = useState<GameState>({
+    board: Array(9).fill(null),
+    xIsNext: true,
+    winner: null,
+    winningCombo: null
+  });
   
   const { addXp } = useGlobalState();
 
@@ -25,14 +35,14 @@ const TicTacToe: React.FC = () => {
     for (let i = 0; i < WINNING_COMBOS.length; i++) {
       const [a, b, c] = WINNING_COMBOS[i];
       if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-        return squares[a];
+        return { player: squares[a], combo: [a, b, c] };
       }
     }
-    if (squares.every(s => s !== null)) return 'DRAW';
+    if (squares.every(s => s !== null)) return { player: 'DRAW' as const, combo: null };
     return null;
   };
 
-  const getBestMove = (squares: Player[], player: Player): number => {
+  const getBestMove = (squares: Player[], player: Player): number | undefined => {
     // 1. Can we win?
     for (let i = 0; i < WINNING_COMBOS.length; i++) {
       const [a, b, c] = WINNING_COMBOS[i];
@@ -55,55 +65,90 @@ const TicTacToe: React.FC = () => {
 
     // 4. Take random available
     const available = squares.map((s, i) => s === null ? i : null).filter(s => s !== null) as number[];
+    if (available.length === 0) return undefined;
     return available[Math.floor(Math.random() * available.length)];
   };
 
-  const handleCellClick = useCallback((index: number) => {
-    if (board[index] || winner) return;
+  const processMove = useCallback((index: number, player: Player, currentMode: Mode, xpAdder: typeof addXp) => {
+    setGameState(prev => {
+      // Guard against multiple clicks or state desync
+      if (prev.board[index] || prev.winner || (currentMode === '1P' && player === 'X' && !prev.xIsNext)) {
+        return prev;
+      }
 
-    const newBoard = [...board];
-    newBoard[index] = xIsNext ? 'X' : 'O';
-    setBoard(newBoard);
-    
-    const win = checkWinner(newBoard);
-    if (win) {
-      setWinner(win);
-      if (win === 'X') addXp(10);
-      else if (win === 'O' && mode === '2P') addXp(10);
-      else if (win === 'DRAW') addXp(2);
-      return;
-    }
+      const newBoard = [...prev.board];
+      newBoard[index] = player;
+      
+      const winResult = checkWinner(newBoard);
+      if (winResult) {
+        // Award XP
+        if (winResult.player === 'X') setTimeout(() => xpAdder(10), 0);
+        else if (winResult.player === 'O' && currentMode === '2P') setTimeout(() => xpAdder(10), 0);
+        else if (winResult.player === 'DRAW') setTimeout(() => xpAdder(2), 0);
 
-    setXIsNext(!xIsNext);
-  }, [board, winner, xIsNext, mode, addXp]);
+        return {
+          ...prev,
+          board: newBoard,
+          winner: winResult.player,
+          winningCombo: winResult.combo
+        };
+      }
+
+      return {
+        ...prev,
+        board: newBoard,
+        xIsNext: !prev.xIsNext
+      };
+    });
+  }, []);
+
+  const handleCellClick = (index: number) => {
+    processMove(index, gameState.xIsNext ? 'X' : 'O', mode, addXp);
+  };
 
   // Bot logic
   useEffect(() => {
-    if (mode === '1P' && !xIsNext && !winner) {
+    if (mode === '1P' && !gameState.xIsNext && !gameState.winner) {
       const timer = setTimeout(() => {
-        const move = getBestMove(board, 'O');
-        if (move !== undefined) {
-          const newBoard = [...board];
-          newBoard[move] = 'O';
-          setBoard(newBoard);
+        setGameState(prev => {
+          if (prev.winner || prev.xIsNext) return prev; // Guard
           
-          const win = checkWinner(newBoard);
-          if (win) {
-            setWinner(win);
-            if (win === 'DRAW') addXp(2);
-          } else {
-            setXIsNext(true);
+          const move = getBestMove(prev.board, 'O');
+          if (move !== undefined) {
+            const newBoard = [...prev.board];
+            newBoard[move] = 'O';
+            
+            const winResult = checkWinner(newBoard);
+            if (winResult) {
+              if (winResult.player === 'DRAW') addXp(2);
+              return {
+                ...prev,
+                board: newBoard,
+                winner: winResult.player,
+                winningCombo: winResult.combo
+              };
+            }
+            
+            return {
+              ...prev,
+              board: newBoard,
+              xIsNext: true
+            };
           }
-        }
-      }, 500); // add slight delay for realism
+          return prev;
+        });
+      }, 600); // slight delay for realism
       return () => clearTimeout(timer);
     }
-  }, [xIsNext, mode, board, winner, addXp]);
+  }, [gameState.xIsNext, gameState.winner, mode, addXp]);
 
   const restart = () => {
-    setBoard(Array(9).fill(null));
-    setXIsNext(true);
-    setWinner(null);
+    setGameState({
+      board: Array(9).fill(null),
+      xIsNext: true,
+      winner: null,
+      winningCombo: null
+    });
   };
 
   if (!mode) {
@@ -135,28 +180,40 @@ const TicTacToe: React.FC = () => {
         <div className={styles.header}>
           <h2>{mode === '1P' ? 'Player vs Bot' : 'Player vs Player'}</h2>
           <div className={styles.status}>
-            {winner ? (
-              winner === 'DRAW' ? "It's a Draw!" : `Winner: ${winner}!`
+            {gameState.winner ? (
+              gameState.winner === 'DRAW' ? "It's a Draw!" : `Winner: ${gameState.winner}!`
             ) : (
-              `Turn: ${xIsNext ? 'X' : 'O'} ${mode === '1P' && !xIsNext ? '(Thinking...)' : ''}`
+              <span className={styles.turnText}>
+                Turn: {gameState.xIsNext ? 'X' : 'O'} 
+                {mode === '1P' && !gameState.xIsNext && <span className={styles.thinking}> Thinking</span>}
+              </span>
             )}
           </div>
         </div>
 
-        <div className={styles.grid}>
-          {board.map((cell, i) => (
-            <button 
-              key={i} 
-              className={`${styles.cell} ${cell ? styles[cell.toLowerCase()] : ''}`}
-              onClick={() => handleCellClick(i)}
-              disabled={!!cell || !!winner || (mode === '1P' && !xIsNext)}
-            >
-              {cell}
-            </button>
-          ))}
+        <div className={styles.grid} data-turn={gameState.xIsNext ? 'X' : 'O'}>
+          {gameState.board.map((cell, i) => {
+            const isWinningCell = gameState.winningCombo?.includes(i);
+            return (
+              <button 
+                key={i} 
+                className={`
+                  ${styles.cell} 
+                  ${cell ? styles[cell.toLowerCase()] : ''} 
+                  ${isWinningCell ? styles.winningCell : ''}
+                  ${cell ? styles.popIn : ''}
+                `}
+                onClick={() => handleCellClick(i)}
+                disabled={!!cell || !!gameState.winner || (mode === '1P' && !gameState.xIsNext)}
+                aria-label={`Cell ${i}, ${cell ? 'Occupied by ' + cell : 'Empty'}`}
+              >
+                {cell}
+              </button>
+            );
+          })}
         </div>
 
-        {(winner || board.every(c => c !== null)) && (
+        {(gameState.winner || gameState.board.every(c => c !== null)) && (
           <button onClick={restart} className={styles.restartBtn}>Play Again</button>
         )}
         <button onClick={() => { setMode(null); restart(); }} className={styles.menuReturnBtn}>Main Menu</button>
