@@ -6,36 +6,77 @@
   align-items: center;
   background-color: #020617;
   padding: 80px 20px 40px;
+  user-select: none;
 }
 
 .gameBoard {
   background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(12px);
   padding: 24px;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 0 40px rgba(100, 116, 139, 0.2);
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .header {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .header h2 {
   color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 2px;
+  font-size: 1.2rem;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+}
+
+.iconBtn, .modeBtn {
+  background: rgba(51, 65, 85, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.iconBtn:hover {
+  background: rgba(71, 85, 105, 0.8);
+}
+
+.modeBtn.flagModeActive {
+  background: #f43f5e;
+  border-color: #f43f5e;
 }
 
 .stats {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.statBox {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(148, 163, 184, 0.2);
+  background: rgba(148, 163, 184, 0.1);
   color: #f8fafc;
   padding: 8px 16px;
   border-radius: 8px;
@@ -58,8 +99,8 @@
 }
 
 .cell {
-  width: 35px;
-  height: 35px;
+  width: 40px;
+  height: 40px;
   background: #475569;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 4px;
@@ -91,23 +132,33 @@
 .gameOverOverlay {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(2, 6, 23, 0.95);
+  background: rgba(2, 6, 23, 0.4);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   border-radius: 16px;
   animation: fadeIn 0.3s;
+  z-index: 10;
 }
 
-.gameOverOverlay h2 {
-  font-size: 2.5rem;
+.overlayBox {
+  background: rgba(15, 23, 42, 0.95);
+  padding: 30px 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+}
+
+.overlayBox h2 {
+  font-size: 2rem;
   margin-bottom: 8px;
 }
 
-.gameOverOverlay p {
+.overlayBox p {
   color: #e2e8f0;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   margin-bottom: 12px;
 }
 
@@ -136,7 +187,7 @@
 
 @media (max-width: 500px) {
   .cell {
-    width: 30px;
-    height: 30px;
+    width: 35px;
+    height: 35px;
   }
 }
