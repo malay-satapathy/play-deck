@@ -84,7 +84,7 @@ const SpringNinja: React.FC = () => {
           state.player.x < p.x + p.w &&
           state.player.x + state.player.w > p.x &&
           state.player.y + state.player.h > p.y &&
-          state.player.y + state.player.h < p.y + p.h + state.player.vy
+          state.player.y - state.player.vy + state.player.h <= p.y
         ) {
           state.player.vy = JUMP_FORCE;
           state.player.y = p.y - state.player.h; // snap to top
@@ -170,10 +170,13 @@ const SpringNinja: React.FC = () => {
   }, [update, draw, gameOver]);
 
   useEffect(() => {
-    initGame();
     requestRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(requestRef.current);
-  }, [loop, initGame]);
+  }, [loop]);
+
+  useEffect(() => {
+    initGame();
+  }, [initGame]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

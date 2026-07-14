@@ -169,10 +169,13 @@ const BlockBuster: React.FC = () => {
   }, [update, draw, gameOver, win]);
 
   useEffect(() => {
-    initBricks();
     requestRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(requestRef.current);
   }, [loop]);
+
+  useEffect(() => {
+    initBricks();
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

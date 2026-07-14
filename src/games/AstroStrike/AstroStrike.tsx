@@ -161,10 +161,13 @@ const AstroStrike: React.FC = () => {
   }, [update, draw, gameOver, win]);
 
   useEffect(() => {
-    initEnemies();
     requestRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(requestRef.current);
   }, [loop]);
+
+  useEffect(() => {
+    initEnemies();
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

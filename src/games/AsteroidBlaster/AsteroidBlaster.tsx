@@ -247,10 +247,13 @@ const AsteroidBlaster: React.FC = () => {
   }, [update, draw, gameOver, win]);
 
   useEffect(() => {
-    spawnAsteroids(gameState.current.level);
     requestRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(requestRef.current);
   }, [loop]);
+
+  useEffect(() => {
+    spawnAsteroids(gameState.current.level);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

@@ -220,10 +220,13 @@ const RiverHopper: React.FC = () => {
   }, [update, draw, gameOver]);
 
   useEffect(() => {
-    initLevel(1);
     requestRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(requestRef.current);
-  }, [loop, initLevel]);
+  }, [loop]);
+
+  useEffect(() => {
+    initLevel(1);
+  }, [initLevel]);
 
   const moveFrog = (dx: number, dy: number) => {
     if (gameOver) return;

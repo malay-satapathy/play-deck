@@ -225,10 +225,13 @@ const MazeMuncher: React.FC = () => {
   }, [update, draw]);
 
   useEffect(() => {
-    initGame();
     requestRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(requestRef.current);
   }, [loop]);
+
+  useEffect(() => {
+    initGame();
+  }, []);
 
   const handleDPad = (dir: 'UP'|'DOWN'|'LEFT'|'RIGHT') => {
     gameState.current.player.nextDir = DIRS[dir];

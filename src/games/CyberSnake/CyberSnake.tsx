@@ -47,15 +47,12 @@ const CyberSnake: React.FC = () => {
         case 'RIGHT': newHead.x += 1; break;
       }
 
-      // Check wall collision
-      if (
-        newHead.x < 0 || newHead.x >= GRID_SIZE ||
-        newHead.y < 0 || newHead.y >= GRID_SIZE
-      ) {
-        setGameOver(true);
-        addXp(Math.floor(score / 5));
-        return prevSnake;
-      }
+      // Screen wrap
+      if (newHead.x < 0) newHead.x = GRID_SIZE - 1;
+      else if (newHead.x >= GRID_SIZE) newHead.x = 0;
+      
+      if (newHead.y < 0) newHead.y = GRID_SIZE - 1;
+      else if (newHead.y >= GRID_SIZE) newHead.y = 0;
 
       // Check self collision
       if (prevSnake.some(segment => segment.x === newHead.x && segment.y === newHead.y)) {
