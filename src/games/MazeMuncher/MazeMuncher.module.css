@@ -15,6 +15,7 @@
   flex-direction: column;
   gap: 20px;
   align-items: center;
+  position: relative; /* Fixed for Overlay */
 }
 
 .header {
@@ -41,21 +42,32 @@
   border: 1px solid rgba(234, 179, 8, 0.3);
 }
 
+.livesBoard {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1.2rem;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
 .canvasContainer {
-  position: relative;
-  background: #020617;
-  border: 4px solid #1e3a8a;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 0 40px rgba(30, 58, 138, 0.5);
+  background: rgba(2, 6, 23, 0.9);
+  padding: 4px;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 50px rgba(59, 130, 246, 0.2);
   width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .canvas {
   width: 100%;
-  height: auto;
-  aspect-ratio: 15/15; 
-  display: block;
+  aspect-ratio: 15/15;
+  background: #020617;
+  border-radius: 4px;
 }
 
 .gameOverOverlay {
@@ -63,22 +75,16 @@
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   background: rgba(2, 6, 23, 0.95);
-  padding: 40px 60px;
-  border-radius: 20px;
-  text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 20;
-}
-
-.gameOverOverlay h2 {
-  font-size: 2.5rem;
-  margin-bottom: 8px;
-}
-
-.gameOverOverlay p {
-  color: #e2e8f0;
-  font-size: 1.2rem;
-  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  padding: 30px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 30px rgba(0,0,0,0.8);
+  width: 80%;
+  z-index: 10;
 }
 
 .restartBtn {
@@ -115,11 +121,14 @@
   color: #eab308;
   border-radius: 12px;
   height: 60px;
-  font-size: 1.5rem;
+  font-size: 2rem;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .dpadBtn:active {
