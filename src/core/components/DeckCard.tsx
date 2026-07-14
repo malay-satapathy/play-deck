@@ -56,7 +56,7 @@ const DeckCard: React.FC<DeckCardProps> = ({
 
   return (
     <div 
-      className={`${styles.deckCard} ${isActive ? styles.activeCard : ''} glass-panel`}
+      className={`${styles.deckCard} ${isActive ? styles.activeCard : ''}`}
       onClick={handleClick}
       style={{ 
         '--suit-color': color, 
@@ -86,12 +86,6 @@ const DeckCard: React.FC<DeckCardProps> = ({
         <h3>{name}</h3>
         <p>{description}</p>
       </div>
-
-      {isActive && (
-        <div className={styles.playOverlay}>
-           <div className={styles.playButton}>PLAY NOW</div>
-        </div>
-      )}
     </div>
   );
 };

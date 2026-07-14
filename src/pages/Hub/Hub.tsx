@@ -263,18 +263,6 @@ const Hub: React.FC = () => {
           />
         ))}
       </main>
-
-      <div className={styles.navigationIndicator}>
-         <span className={styles.dots}>
-            {GAMES.map((_, i) => (
-              <span 
-                key={i} 
-                className={`${styles.dot} ${i === activeIndex ? styles.activeDot : ''}`} 
-                onClick={() => setActiveIndex(i)}
-              />
-            ))}
-         </span>
-      </div>
     </div>
   );
 };
