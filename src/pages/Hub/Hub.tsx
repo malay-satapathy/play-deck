@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import DeckCard from '../../core/components/DeckCard';
 import { useGlobalState } from '../../core/store/GlobalContext';
 import styles from './Hub.module.css';
@@ -10,28 +10,20 @@ import {
 
 const GAMES = [
   {
-    id: 'maze-muncher',
-    name: 'Maze-Muncher',
-    description: 'The iconic dot-eating, ghost-dodging arcade legend.',
-    gradient: 'linear-gradient(135deg, #eab308, #ca8a04)',
-    icon: <Ghost size={48} color="white" />,
-    suit: '♥', rank: 'K', color: '#ef4444'
-  },
-  {
     id: 'tetra-drop',
     name: 'Tetra-Drop',
     description: 'The world\'s most famous falling block puzzle. Clear lines to survive.',
     gradient: 'linear-gradient(135deg, #a855f7, #7e22ce)',
     icon: <Shapes size={48} color="white" />,
-    suit: '♠', rank: 'A', color: '#f8fafc'
+    suit: '♠', rank: 'A', color: '#a855f7'
   },
   {
-    id: 'cyber-snake',
-    name: 'Cyber-Snake',
-    description: 'The classic Nokia-era snake game with a neon twist.',
-    gradient: 'linear-gradient(135deg, #22c55e, #15803d)',
-    icon: <Bug size={48} color="white" />,
-    suit: '♦', rank: 'J', color: '#ef4444'
+    id: 'maze-muncher',
+    name: 'Maze-Muncher',
+    description: 'The iconic dot-eating, ghost-dodging arcade legend.',
+    gradient: 'linear-gradient(135deg, #eab308, #ca8a04)',
+    icon: <Ghost size={48} color="white" />,
+    suit: '♥', rank: 'K', color: '#eab308'
   },
   {
     id: 'astro-strike',
@@ -39,7 +31,7 @@ const GAMES = [
     description: 'Defend earth from descending alien invaders.',
     gradient: 'linear-gradient(135deg, #06b6d4, #0891b2)',
     icon: <Rocket size={48} color="white" />,
-    suit: '♣', rank: 'Q', color: '#f8fafc'
+    suit: '♣', rank: 'Q', color: '#06b6d4'
   },
   {
     id: 'neon-pong',
@@ -47,31 +39,15 @@ const GAMES = [
     description: 'The grandfather of gaming. Bounce the ball past your opponent.',
     gradient: 'linear-gradient(135deg, #ec4899, #be185d)',
     icon: <ScanLine size={48} color="white" />,
-    suit: '♠', rank: '10', color: '#f8fafc'
+    suit: '♠', rank: '10', color: '#ec4899'
   },
   {
-    id: 'asteroid-blaster',
-    name: 'Asteroid-Blaster',
-    description: 'Thrust through space and blast rocks into smaller pieces.',
-    gradient: 'linear-gradient(135deg, #a78bfa, #7c3aed)',
-    icon: <Crosshair size={48} color="white" />,
-    suit: '♥', rank: '9', color: '#ef4444'
-  },
-  {
-    id: 'grid-sweeper',
-    name: 'Grid-Sweeper',
-    description: 'Use logic to flag hidden mines without detonating them.',
-    gradient: 'linear-gradient(135deg, #94a3b8, #475569)',
-    icon: <Bomb size={48} color="white" />,
-    suit: '♦', rank: '7', color: '#ef4444'
-  },
-  {
-    id: 'gravity-4',
-    name: 'Gravity-4',
-    description: 'Drop tokens to connect 4 in a row before the AI.',
-    gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-    icon: <ArrowDownToLine size={48} color="white" />,
-    suit: '♦', rank: '3', color: '#ef4444'
+    id: 'cyber-snake',
+    name: 'Cyber-Snake',
+    description: 'The classic Nokia-era snake game with a neon twist.',
+    gradient: 'linear-gradient(135deg, #22c55e, #15803d)',
+    icon: <Bug size={48} color="white" />,
+    suit: '♦', rank: 'J', color: '#22c55e'
   },
   {
     id: 'tic-tac-toe',
@@ -79,15 +55,15 @@ const GAMES = [
     description: 'The classic grid game. Play vs Bot or Local 2P.',
     gradient: 'linear-gradient(135deg, #14b8a6, #0f766e)',
     icon: <Hash size={48} color="white" />,
-    suit: '♠', rank: '2', color: '#f8fafc'
+    suit: '♠', rank: '2', color: '#14b8a6'
   },
   {
-    id: 'memory-seq',
-    name: 'Memory-Seq',
-    description: 'Repeat the flashing light and sound sequences.',
-    gradient: 'linear-gradient(135deg, #1e293b, #020617)',
-    icon: <Music size={48} color="white" />,
-    suit: '♥', rank: 'A', color: '#ef4444'
+    id: 'grid-sweeper',
+    name: 'Grid-Sweeper',
+    description: 'Use logic to flag hidden mines without detonating them.',
+    gradient: 'linear-gradient(135deg, #94a3b8, #475569)',
+    icon: <Bomb size={48} color="white" />,
+    suit: '♦', rank: '7', color: '#94a3b8'
   },
   {
     id: 'block-buster',
@@ -95,15 +71,15 @@ const GAMES = [
     description: 'Bounce the ball to break all the colored bricks.',
     gradient: 'linear-gradient(135deg, #38bdf8, #0369a1)',
     icon: <Gamepad2 size={48} color="white" />,
-    suit: '♣', rank: '8', color: '#f8fafc'
+    suit: '♣', rank: '8', color: '#38bdf8'
   },
   {
-    id: 'hover-jumper',
-    name: 'Hover-Jumper',
-    description: 'Tap to flap and dodge the endless pipes.',
-    gradient: 'linear-gradient(135deg, #f472b6, #db2777)',
-    icon: <Wind size={48} color="white" />,
-    suit: '♠', rank: '6', color: '#f8fafc'
+    id: 'asteroid-blaster',
+    name: 'Asteroid-Blaster',
+    description: 'Thrust through space and blast rocks into smaller pieces.',
+    gradient: 'linear-gradient(135deg, #a78bfa, #7c3aed)',
+    icon: <Crosshair size={48} color="white" />,
+    suit: '♥', rank: '9', color: '#a78bfa'
   },
   {
     id: 'river-hopper',
@@ -111,7 +87,7 @@ const GAMES = [
     description: 'Dodge cars and ride logs to cross the deadly river.',
     gradient: 'linear-gradient(135deg, #4ade80, #16a34a)',
     icon: <Navigation size={48} color="white" />,
-    suit: '♥', rank: '5', color: '#ef4444'
+    suit: '♥', rank: '5', color: '#4ade80'
   },
   {
     id: 'word-master',
@@ -119,15 +95,23 @@ const GAMES = [
     description: 'Guess the secret 5-letter word in 6 tries.',
     gradient: 'linear-gradient(135deg, #64748b, #334155)',
     icon: <Type size={48} color="white" />,
-    suit: '♣', rank: '4', color: '#f8fafc'
+    suit: '♣', rank: '4', color: '#64748b'
   },
   {
-    id: 'spring-ninja',
-    name: 'Spring-Ninja',
-    description: 'Bounce infinitely higher on generated platforms.',
-    gradient: 'linear-gradient(135deg, #4c1d95, #312e81)',
-    icon: <ArrowUpToLine size={48} color="white" />,
-    suit: '♦', rank: 'Q', color: '#ef4444'
+    id: 'hover-jumper',
+    name: 'Hover-Jumper',
+    description: 'Tap to flap and dodge the endless pipes.',
+    gradient: 'linear-gradient(135deg, #f472b6, #db2777)',
+    icon: <Wind size={48} color="white" />,
+    suit: '♠', rank: '6', color: '#f472b6'
+  },
+  {
+    id: 'gravity-4',
+    name: 'Gravity-4',
+    description: 'Drop tokens to connect 4 in a row before the AI.',
+    gradient: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+    icon: <ArrowDownToLine size={48} color="white" />,
+    suit: '♦', rank: '3', color: '#3b82f6'
   },
   {
     id: 'card-flip',
@@ -135,16 +119,31 @@ const GAMES = [
     description: 'Flip cards and find the matching pairs.',
     gradient: 'linear-gradient(135deg, #c084fc, #9333ea)',
     icon: <Shuffle size={48} color="white" />,
-    suit: '♣', rank: 'K', color: '#f8fafc'
+    suit: '♣', rank: 'K', color: '#c084fc'
   },
-  // Original indie games
+  {
+    id: 'memory-seq',
+    name: 'Memory-Seq',
+    description: 'Repeat the flashing light and sound sequences.',
+    gradient: 'linear-gradient(135deg, #1e293b, #020617)',
+    icon: <Music size={48} color="white" />,
+    suit: '♥', rank: 'A', color: '#f8fafc'
+  },
+  {
+    id: 'spring-ninja',
+    name: 'Spring-Ninja',
+    description: 'Bounce infinitely higher on generated platforms.',
+    gradient: 'linear-gradient(135deg, #4c1d95, #312e81)',
+    icon: <ArrowUpToLine size={48} color="white" />,
+    suit: '♦', rank: 'Q', color: '#4c1d95'
+  },
   {
     id: 'merge-stack',
     name: 'Merge the Stack',
     description: 'Combine tech to build the ultimate web app.',
     gradient: 'linear-gradient(135deg, #f59e0b, #ea580c)',
     icon: <Layers size={48} color="white" />,
-    suit: '♠', rank: 'J', color: '#f8fafc'
+    suit: '♠', rank: 'J', color: '#f59e0b'
   },
   {
     id: 'cosmic-miner',
@@ -152,15 +151,7 @@ const GAMES = [
     description: 'Build an idle space empire from scratch.',
     gradient: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
     icon: <Pickaxe size={48} color="white" />,
-    suit: '♥', rank: '10', color: '#ef4444'
-  },
-  {
-    id: 'typing-defender',
-    name: 'Typing Defender',
-    description: 'Defend the mainframe by typing fast.',
-    gradient: 'linear-gradient(135deg, #10b981, #059669)',
-    icon: <Keyboard size={48} color="white" />,
-    suit: '♣', rank: '9', color: '#f8fafc'
+    suit: '♥', rank: '10', color: '#8b5cf6'
   },
   {
     id: 'gridlock-escape',
@@ -168,7 +159,15 @@ const GAMES = [
     description: 'Navigate the disappearing grid to escape.',
     gradient: 'linear-gradient(135deg, #3b82f6, #2563eb)',
     icon: <Grid size={48} color="white" />,
-    suit: '♦', rank: '8', color: '#ef4444'
+    suit: '♦', rank: '8', color: '#3b82f6'
+  },
+  {
+    id: 'typing-defender',
+    name: 'Typing Defender',
+    description: 'Defend the mainframe by typing fast.',
+    gradient: 'linear-gradient(135deg, #10b981, #059669)',
+    icon: <Keyboard size={48} color="white" />,
+    suit: '♣', rank: '9', color: '#10b981'
   },
   {
     id: 'neon-rider',
@@ -176,7 +175,7 @@ const GAMES = [
     description: 'Dodge obstacles in an endless synthwave runner.',
     gradient: 'linear-gradient(135deg, #ec4899, #be185d)',
     icon: <Rocket size={48} color="white" />,
-    suit: '♠', rank: '7', color: '#f8fafc'
+    suit: '♠', rank: '7', color: '#ec4899'
   },
   {
     id: 'quantum-dice',
@@ -184,19 +183,62 @@ const GAMES = [
     description: 'Predict the roll of a 3D quantum cube.',
     gradient: 'linear-gradient(135deg, #f43f5e, #be123c)',
     icon: <Dices size={48} color="white" />,
-    suit: '♥', rank: '6', color: '#ef4444'
+    suit: '♥', rank: '6', color: '#f43f5e'
   }
 ];
 
 const Hub: React.FC = () => {
   const { level, globalXp } = useGlobalState();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const wheelTimeout = useRef<number | null>(null);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') {
+        setActiveIndex(prev => Math.min(prev + 1, GAMES.length - 1));
+      } else if (e.key === 'ArrowLeft') {
+        setActiveIndex(prev => Math.max(prev - 1, 0));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Wheel/touch navigation
+  const handleWheel = (e: React.WheelEvent) => {
+    if (wheelTimeout.current !== null) return;
+    
+    // Adjust threshold for trackpads
+    const threshold = 30;
+    
+    if (e.deltaY > threshold || e.deltaX > threshold) {
+      setActiveIndex(prev => Math.min(prev + 1, GAMES.length - 1));
+      wheelTimeout.current = window.setTimeout(() => { wheelTimeout.current = null; }, 400);
+    } else if (e.deltaY < -threshold || e.deltaX < -threshold) {
+      setActiveIndex(prev => Math.max(prev - 1, 0));
+      wheelTimeout.current = window.setTimeout(() => { wheelTimeout.current = null; }, 400);
+    }
+  };
+
+  const activeGame = GAMES[activeIndex];
 
   return (
-    <div className={styles.hubContainer}>
+    <div 
+      className={styles.hubContainer} 
+      onWheel={handleWheel}
+      style={{ '--active-color': activeGame.color } as React.CSSProperties}
+    >
+      {/* Dynamic Background */}
+      <div className={styles.dynamicBgWrapper}>
+         <div className={styles.dynamicBg} style={{ background: activeGame.gradient }} />
+         <div className={styles.bgOverlay} />
+      </div>
+
       <header className={styles.hubHeader}>
         <div className={styles.titleArea}>
           <h1 className={styles.hubTitle}>Play-Deck</h1>
-          <p className={styles.hubSubtitle}>The Ultimate Web Arcade (22 Games)</p>
+          <p className={styles.hubSubtitle}>Use Arrow Keys or Scroll to Browse</p>
         </div>
         <div className={`${styles.statsPanel} glass-panel`}>
           <div className={styles.statBox}>
@@ -210,11 +252,29 @@ const Hub: React.FC = () => {
         </div>
       </header>
       
-      <main className={styles.deckGrid}>
+      <main className={styles.deckContainer}>
         {GAMES.map((game, index) => (
-          <DeckCard key={game.id} {...game} index={index} />
+          <DeckCard 
+            key={game.id} 
+            {...game} 
+            index={index} 
+            activeIndex={activeIndex}
+            onClick={() => setActiveIndex(index)}
+          />
         ))}
       </main>
+
+      <div className={styles.navigationIndicator}>
+         <span className={styles.dots}>
+            {GAMES.map((_, i) => (
+              <span 
+                key={i} 
+                className={`${styles.dot} ${i === activeIndex ? styles.activeDot : ''}`} 
+                onClick={() => setActiveIndex(i)}
+              />
+            ))}
+         </span>
+      </div>
     </div>
   );
 };
