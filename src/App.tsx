@@ -14,7 +14,7 @@ import QuantumDice from './games/QuantumDice/QuantumDice';
 const App: React.FC = () => {
   return (
     <GlobalProvider>
-      <Router>
+      <Router basename="/play-deck/">
         <Routes>
           <Route path="/" element={<Hub />} />
           <Route path="/game/merge-stack" element={<MergeStack />} />
