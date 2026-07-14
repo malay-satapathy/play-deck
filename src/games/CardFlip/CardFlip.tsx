@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import BackButton from '../../core/components/BackButton';
 import { useGlobalState } from '../../core/store/GlobalContext';
 import styles from './CardFlip.module.css';
@@ -12,6 +12,13 @@ type CardState = {
   isMatched: boolean;
 };
 
+const getSymbolColor = (symbol: string) => {
+  if (symbol === '♥' || symbol === '♦' || symbol === '🔥') return '#ef4444'; // Red
+  if (symbol === '⚡' || symbol === '★') return '#eab308'; // Yellow
+  if (symbol === '💎') return '#22d3ee'; // Cyan
+  return '#f8fafc'; // White
+};
+
 const CardFlip: React.FC = () => {
   const [cards, setCards] = useState<CardState[]>([]);
   const [flippedIds, setFlippedIds] = useState<number[]>([]);
@@ -19,8 +26,22 @@ const CardFlip: React.FC = () => {
   const [win, setWin] = useState(false);
   
   const { addXp } = useGlobalState();
+  const isProcessingRef = useRef(false);
+  const timeoutRefs = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const clearTimeouts = () => {
+    timeoutRefs.current.forEach(clearTimeout);
+    timeoutRefs.current = [];
+  };
+
+  useEffect(() => {
+    return () => clearTimeouts();
+  }, []);
 
   const initGame = useCallback(() => {
+    clearTimeouts();
+    isProcessingRef.current = false;
+    
     const deck = [...SYMBOLS, ...SYMBOLS];
     // Shuffle
     for (let i = deck.length - 1; i > 0; i--) {
@@ -44,27 +65,31 @@ const CardFlip: React.FC = () => {
   }, [initGame]);
 
   const handleCardClick = (id: number) => {
-    if (flippedIds.length >= 2) return; // Prevent clicking more than 2
-    if (cards[id].isFlipped || cards[id].isMatched) return;
+    if (isProcessingRef.current || flippedIds.length >= 2) return;
+    
+    const clickedCard = cards.find(c => c.id === id);
+    if (!clickedCard || clickedCard.isFlipped || clickedCard.isMatched) return;
 
-    const newCards = [...cards];
-    newCards[id].isFlipped = true;
-    setCards(newCards);
+    setCards(prev => prev.map(c => c.id === id ? { ...c, isFlipped: true } : c));
 
     const newFlippedIds = [...flippedIds, id];
     setFlippedIds(newFlippedIds);
 
     if (newFlippedIds.length === 2) {
+      isProcessingRef.current = true;
       setMoves(m => m + 1);
       
-      const [id1, id2] = newFlippedIds;
-      if (newCards[id1].symbol === newCards[id2].symbol) {
+      const id1 = newFlippedIds[0];
+      const id2 = newFlippedIds[1];
+      const card1 = cards.find(c => c.id === id1)!;
+      
+      if (card1.symbol === clickedCard.symbol) {
         // Match
-        setTimeout(() => {
+        const t = setTimeout(() => {
           setCards(prev => {
-            const matched = [...prev];
-            matched[id1].isMatched = true;
-            matched[id2].isMatched = true;
+            const matched = prev.map(c => 
+              (c.id === id1 || c.id === id2) ? { ...c, isMatched: true } : c
+            );
             
             // Check win
             if (matched.every(c => c.isMatched)) {
@@ -74,28 +99,25 @@ const CardFlip: React.FC = () => {
             return matched;
           });
           setFlippedIds([]);
+          isProcessingRef.current = false;
         }, 500);
+        timeoutRefs.current.push(t);
       } else {
         // No match
-        setTimeout(() => {
-          setCards(prev => {
-            const flippedBack = [...prev];
-            flippedBack[id1].isFlipped = false;
-            flippedBack[id2].isFlipped = false;
-            return flippedBack;
-          });
+        const t = setTimeout(() => {
+          setCards(prev => prev.map(c => 
+            (c.id === id1 || c.id === id2) ? { ...c, isFlipped: false } : c
+          ));
           setFlippedIds([]);
+          isProcessingRef.current = false;
         }, 1000);
+        timeoutRefs.current.push(t);
       }
     }
   };
 
-  const getSymbolColor = (symbol: string) => {
-    if (symbol === '♥' || symbol === '♦' || symbol === '🔥') return '#ef4444'; // Red
-    if (symbol === '⚡' || symbol === '★') return '#eab308'; // Yellow
-    if (symbol === '💎') return '#22d3ee'; // Cyan
-    return '#f8fafc'; // White
-  };
+  const pairsMatched = cards.filter(c => c.isMatched).length / 2;
+  const totalPairs = SYMBOLS.length;
 
   return (
     <div className={styles.gameContainer}>
@@ -106,6 +128,7 @@ const CardFlip: React.FC = () => {
           <h2>Card-Flip</h2>
           <div className={styles.stats}>
             <span>Moves: {moves}</span>
+            <span>Pairs: {pairsMatched} / {totalPairs}</span>
           </div>
         </div>
 
