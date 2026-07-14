@@ -6,6 +6,11 @@
   justify-content: center;
   align-items: center;
   color: white;
+  transition: background-color 0.1s;
+}
+
+.damageFlash {
+  background-color: #7f1d1d; /* Red flash */
 }
 
 .gameArea {
@@ -15,6 +20,7 @@
   gap: 16px;
   width: 100%;
   max-width: 600px;
+  height: 90vh; /* Better for mobile overflow */
   padding: 20px;
 }
 
@@ -41,6 +47,7 @@
 }
 
 .playField {
+  flex: 1; /* Take up remaining height */
   background: rgba(15, 23, 42, 0.8);
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
@@ -52,14 +59,32 @@
 
 .word {
   position: absolute;
+  top: -50px;
   padding: 8px 16px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(30, 41, 59, 0.95); /* Higher contrast */
   border-radius: 8px;
   font-family: monospace;
   font-size: 1.2rem;
-  color: #94a3b8;
+  color: #cbd5e1; /* Higher contrast text */
   white-space: nowrap;
-  transition: border 0.1s;
+  animation-name: fallDown;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  transform: translateX(-50%);
+  outline: 2px solid transparent;
+  transition: outline 0.1s, box-shadow 0.1s, transform 0.1s;
+}
+
+.word.targeted {
+  outline: 2px solid #10b981;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+  transform: translateX(-50%) scale(1.1); /* Slight pop when targeted */
+  z-index: 10;
+}
+
+@keyframes fallDown {
+  from { top: -50px; }
+  to { top: calc(100% + 50px); }
 }
 
 .typedPart {
@@ -75,6 +100,7 @@
   height: 10px;
   background: linear-gradient(90deg, #10b981, #059669);
   box-shadow: 0 0 20px #10b981;
+  z-index: 5;
 }
 
 .inputDisplay {
@@ -89,6 +115,20 @@
   font-size: 2rem;
   font-family: monospace;
   color: #10b981;
+  transition: background 0.1s;
+}
+
+.errorFlash {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: #ef4444;
+}
+
+.placeholder {
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
 }
 
 /* Mobile Responsiveness */
@@ -110,18 +150,20 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 10;
+  z-index: 20;
 }
 
 .gameOverOverlay h2 {
   font-size: 3rem;
   color: #ef4444;
   margin-bottom: 16px;
+  text-align: center;
 }
 
 .gameOverOverlay p {
   font-size: 1.2rem;
   margin-bottom: 24px;
+  text-align: center;
 }
 
 .restartBtn {
