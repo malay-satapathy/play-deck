@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { GlobalProvider } from './core/store/GlobalContext';
 import Hub from './pages/Hub/Hub';
-import BackButton from './core/components/BackButton';
 
 import MergeStack from './games/MergeStack/MergeStack';
 import CosmicMiner from './games/CosmicMiner/CosmicMiner';

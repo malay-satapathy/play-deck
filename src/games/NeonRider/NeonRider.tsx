@@ -24,7 +24,7 @@ const NeonRider: React.FC = () => {
     keys: { left: false, right: false }
   });
 
-  const requestRef = useRef<number>();
+  const requestRef = useRef<number>(0);
   const lastSpawnRef = useRef<number>(0);
 
   const draw = useCallback((ctx: CanvasRenderingContext2D) => {

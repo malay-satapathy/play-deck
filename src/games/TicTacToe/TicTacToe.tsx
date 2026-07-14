@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import BackButton from '../../core/components/BackButton';
 import { useGlobalState } from '../../core/store/GlobalContext';
 import styles from './TicTacToe.module.css';
-import { User, Cpu, Users } from 'lucide-react';
+import { Cpu, Users } from 'lucide-react';
 
 type Player = 'X' | 'O' | null;
 type Mode = '1P' | '2P' | null;

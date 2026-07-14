@@ -28,7 +28,7 @@ const TypingDefender: React.FC = () => {
   const [gameOver, setGameOver] = useState(false);
   
   const { addXp } = useGlobalState();
-  const requestRef = useRef<number>();
+  const requestRef = useRef<number>(0);
   const idCounter = useRef(0);
 
   const spawnWord = useCallback(() => {

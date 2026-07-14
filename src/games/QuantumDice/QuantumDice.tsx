@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import BackButton from '../../core/components/BackButton';
 import { useGlobalState } from '../../core/store/GlobalContext';
 import styles from './QuantumDice.module.css';
