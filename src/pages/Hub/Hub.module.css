@@ -1,0 +1,164 @@
+.hubContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.hubHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 60px;
+}
+
+.hubTitle {
+  font-size: 3.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #60a5fa, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+}
+
+.hubSubtitle {
+  font-size: 1.2rem;
+  color: #94a3b8;
+}
+
+.statsPanel {
+  display: flex;
+  gap: 24px;
+  padding: 16px 32px;
+}
+
+.statBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.statLabel {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.statValue {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+/* Card Grid Layout */
+.deckGrid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 40px;
+}
+
+/* Deck Card Styling (Poker Card Aspect Ratio ~2.5:3.5) */
+.deckCard {
+  width: 300px;
+  height: 420px;
+  position: relative;
+  cursor: pointer;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.deckCard:hover {
+  transform: translateY(-15px) scale(1.05) rotate(2deg);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 255, 255, 0.1);
+  z-index: 10;
+}
+
+/* Playing Card Corner Indices */
+.cardCorner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+  color: var(--suit-color);
+}
+
+.cardRank {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.cardSuit {
+  font-size: 1.5rem;
+}
+
+/* Center Graphic */
+.cardCenter {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cardGraphic {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+}
+
+/* Bottom Text Content */
+.cardContent {
+  text-align: center;
+  margin-top: auto;
+}
+
+.cardContent h3 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+  color: #f8fafc;
+}
+
+.cardContent p {
+  color: #cbd5e1;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+  .hubHeader {
+    flex-direction: column;
+    gap: 24px;
+    align-items: flex-start;
+  }
+  
+  .statsPanel {
+    width: 100%;
+    justify-content: space-around;
+  }
+  
+  .deckGrid {
+    gap: 20px;
+  }
+  
+  .deckCard {
+    width: 100%;
+    max-width: 320px;
+    height: 380px;
+  }
+}

@@ -1,0 +1,184 @@
+.gameContainer {
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #0f172a;
+  padding: 80px 20px 40px;
+}
+
+.menuBox {
+  background: rgba(30, 41, 59, 0.8);
+  backdrop-filter: blur(12px);
+  padding: 40px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.menuBox h1 {
+  font-size: 3rem;
+  color: #60a5fa;
+  margin-bottom: 8px;
+}
+
+.menuBox p {
+  color: #94a3b8;
+  margin-bottom: 32px;
+  font-size: 1.2rem;
+}
+
+.modeButtons {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+}
+
+.modeBtn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 160px;
+}
+
+.modeBtn:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
+  transform: translateY(-4px);
+}
+
+.gameBoard {
+  background: rgba(30, 41, 59, 0.8);
+  backdrop-filter: blur(12px);
+  padding: 40px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.header {
+  text-align: center;
+}
+
+.header h2 {
+  color: #64748b;
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.status {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #f8fafc;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 16px;
+  border-radius: 16px;
+}
+
+.cell {
+  width: 100px;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  border-radius: 12px;
+  font-size: 4rem;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-family: 'Outfit', sans-serif;
+}
+
+.cell:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.cell.x {
+  color: #3b82f6;
+  text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+}
+
+.cell.o {
+  color: #ef4444;
+  text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+}
+
+.restartBtn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 16px 48px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+  width: 100%;
+}
+
+.restartBtn:hover {
+  background: #059669;
+  transform: translateY(-2px);
+}
+
+.menuReturnBtn {
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.menuReturnBtn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+/* Responsiveness */
+@media (max-width: 500px) {
+  .modeButtons {
+    flex-direction: column;
+  }
+  
+  .modeBtn {
+    width: 100%;
+  }
+
+  .gameBoard {
+    padding: 24px;
+    width: 100%;
+    max-width: 380px;
+  }
+
+  .cell {
+    width: 80px;
+    height: 80px;
+    font-size: 3rem;
+  }
+}
