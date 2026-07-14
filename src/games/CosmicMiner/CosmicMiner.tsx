@@ -1,205 +1,192 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import BackButton from '../../core/components/BackButton';
 import { useGlobalState } from '../../core/store/GlobalContext';
 import styles from './CosmicMiner.module.css';
-import { Pickaxe, Settings, ChevronUp, Gem, Rocket } from 'lucide-react';
 
-interface FloatingText {
+const GAME_DURATION = 60; // 60 seconds
+
+type Asteroid = {
   id: number;
-  x: number;
-  y: number;
-  value: number;
-}
+  x: number; // percentage
+  y: number; // percentage
+  size: number;
+};
+
+type Particle = {
+  id: number;
+  left: string;
+  top: string;
+  xp: boolean;
+};
 
 const CosmicMiner: React.FC = () => {
-  const [minerals, setMinerals] = useState(0);
-  const [miners, setMiners] = useState(0);
-  const [clickPower, setClickPower] = useState(1);
-  const [stations, setStations] = useState(0); // Tier 3
-  const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([]);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
+  const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(GAME_DURATION);
+  const [asteroid, setAsteroid] = useState<Asteroid | null>(null);
+  const [particles, setParticles] = useState<Particle[]>([]);
+  const [missFlash, setMissFlash] = useState(false);
   
   const { addXp } = useGlobalState();
-  const textIdCounter = useRef(0);
+  const asteroidIdCounter = useRef(0);
+  const particleIdCounter = useRef(0);
+  const gameAreaRef = useRef<HTMLDivElement>(null);
+  
+  const spawnAsteroid = useCallback(() => {
+    const x = 10 + Math.random() * 80;
+    const y = 10 + Math.random() * 80;
+    const size = 50 + Math.random() * 70; // 50px to 120px
+    setAsteroid({
+      id: asteroidIdCounter.current++,
+      x,
+      y,
+      size
+    });
+  }, []);
 
-  const minerCost = Math.floor(10 * Math.pow(1.15, miners));
-  const clickUpgradeCost = Math.floor(50 * Math.pow(1.5, clickPower - 1));
-  const stationCost = Math.floor(500 * Math.pow(1.2, stations));
-
-  const mineralsPerSec = miners * 1 + stations * 25;
-
+  // Timer loop
   useEffect(() => {
+    if (!isPlaying) return;
     const interval = setInterval(() => {
-      if (mineralsPerSec > 0) {
-        setMinerals(m => m + mineralsPerSec);
-        if (Math.random() < 0.05 * mineralsPerSec) {
-          addXp(1);
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          setIsPlaying(false);
+          setGameOver(true);
+          return 0;
         }
-      }
+        return prev - 1;
+      });
     }, 1000);
     return () => clearInterval(interval);
-  }, [mineralsPerSec, addXp]);
+  }, [isPlaying]);
 
-  const handleAsteroidClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    setMinerals(m => m + clickPower);
-    if (Math.random() < 0.1) addXp(1);
+  // Despawn loop
+  useEffect(() => {
+    if (!isPlaying) return;
+    const despawnInterval = setInterval(() => {
+      spawnAsteroid();
+    }, 1200); // asteroid despawns every 1.2s if not clicked
+    return () => clearInterval(despawnInterval);
+  }, [isPlaying, spawnAsteroid]);
 
-    // Floating text logic
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+  // Cleanup floating particles safely
+  useEffect(() => {
+    return () => {
+      // Any necessary cleanup on unmount
+    };
+  }, []);
+
+  const startGame = () => {
+    setScore(0);
+    setTimeLeft(GAME_DURATION);
+    setIsPlaying(true);
+    setGameOver(false);
+    spawnAsteroid();
+  };
+
+  const handleAsteroidClick = (e: React.MouseEvent | React.KeyboardEvent | React.PointerEvent) => {
+    e.stopPropagation();
+    if (!isPlaying) return;
     
-    const id = textIdCounter.current++;
-    setFloatingTexts(prev => [...prev, { id, x, y, value: clickPower }]);
+    let left = '50%';
+    let top = '50%';
     
+    if ('clientX' in e && e.clientX !== 0 && e.clientY !== 0) {
+      const rect = gameAreaRef.current?.getBoundingClientRect();
+      if (rect) {
+        left = `${e.clientX - rect.left}px`;
+        top = `${e.clientY - rect.top}px`;
+      }
+    } else if (asteroid) {
+      left = `${asteroid.x}%`;
+      top = `${asteroid.y}%`;
+    }
+    
+    const gotXp = Math.random() < 0.15;
+    if (gotXp) addXp(1);
+    
+    const pId = particleIdCounter.current++;
+    setParticles(prev => [...prev, { id: pId, left, top, xp: gotXp }]);
+    
+    // Safely remove particle later
     setTimeout(() => {
-      setFloatingTexts(prev => prev.filter(t => t.id !== id));
-    }, 1000);
+      setParticles(prev => prev.filter(p => p.id !== pId));
+    }, 600);
+    
+    setScore(s => s + 10);
+    spawnAsteroid(); // respawn immediately
   };
-
-  const buyMiner = () => {
-    if (minerals >= minerCost) {
-      setMinerals(m => m - minerCost);
-      setMiners(m => m + 1);
-    }
-  };
-
-  const upgradeClick = () => {
-    if (minerals >= clickUpgradeCost) {
-      setMinerals(m => m - clickUpgradeCost);
-      setClickPower(c => c + 1);
-    }
-  };
-
-  const buyStation = () => {
-    if (minerals >= stationCost) {
-      setMinerals(m => m - stationCost);
-      setStations(s => s + 1);
-    }
+  
+  const handleMissClick = () => {
+    if (!isPlaying) return;
+    setTimeLeft(prev => Math.max(0, prev - 1)); // -1 second penalty
+    setMissFlash(true);
+    setTimeout(() => setMissFlash(false), 150);
   };
 
   return (
     <div className={styles.gameContainer}>
       <BackButton />
       
-      <div className={styles.dashboard}>
-        <div className={styles.leftColumn}>
-          <div className={styles.statsPanel}>
-            <div className={styles.statHeader}>
-              <Gem size={32} color="#a78bfa" />
-              <h2>Cosmic Resources</h2>
-            </div>
-            <div className={styles.mineralCount}>
-              {Math.floor(minerals).toLocaleString()}
-            </div>
-            <div className={styles.rates}>
-              <div className={styles.rateItem}>
-                <span>Per Second:</span>
-                <span className={styles.rateValue}>{mineralsPerSec}/s</span>
-              </div>
-              <div className={styles.rateItem}>
-                <span>Per Click:</span>
-                <span className={styles.rateValue}>{clickPower}</span>
-              </div>
-            </div>
+      <div className={styles.hud}>
+        <div className={styles.score}>SCORE: {score}</div>
+        <div className={styles.timer}>TIME: {timeLeft}s</div>
+      </div>
+
+      <div 
+        ref={gameAreaRef}
+        className={`${styles.gameArea} ${missFlash ? styles.miss : ''}`}
+        onPointerDown={handleMissClick}
+      >
+        {!isPlaying && !gameOver && (
+          <div className={styles.overlay}>
+            <h2>Cosmic Miner</h2>
+            <p>Mine asteroids fast! Misses cost 1 second.</p>
+            <button className={styles.startBtn} onClick={startGame}>Start Mining</button>
           </div>
-
-          <div className={styles.upgradesPanel}>
-            <h3><Settings size={20} /> Tech Tree</h3>
-            
-            <button 
-              className={styles.upgradeCard} 
-              onClick={upgradeClick} 
-              disabled={minerals < clickUpgradeCost}
-            >
-              <div className={styles.upgradeInfo}>
-                <h4>Laser Drill (Lvl {clickPower})</h4>
-                <p>+1 mineral per click.</p>
-              </div>
-              <div className={styles.upgradeCost}>
-                <span>Cost: {clickUpgradeCost}</span>
-                <Pickaxe size={24} />
-              </div>
-            </button>
-
-            <button 
-              className={styles.upgradeCard} 
-              onClick={buyMiner} 
-              disabled={minerals < minerCost}
-            >
-              <div className={styles.upgradeInfo}>
-                <h4>Auto-Drone ({miners})</h4>
-                <p>+1 mineral every second.</p>
-              </div>
-              <div className={styles.upgradeCost}>
-                <span>Cost: {minerCost}</span>
-                <ChevronUp size={24} />
-              </div>
-            </button>
-
-            <button 
-              className={styles.upgradeCard} 
-              onClick={buyStation} 
-              disabled={minerals < stationCost}
-            >
-              <div className={styles.upgradeInfo}>
-                <h4>Orbital Station ({stations})</h4>
-                <p>+25 minerals every second.</p>
-              </div>
-              <div className={styles.upgradeCost}>
-                <span>Cost: {stationCost}</span>
-                <Rocket size={24} />
-              </div>
-            </button>
+        )}
+        
+        {gameOver && (
+          <div className={styles.overlay}>
+            <h2>TIME'S UP!</h2>
+            <p>Final Score: {score}</p>
+            <p>Global XP Earned: +{Math.floor(score / 50)}</p>
+            <button className={styles.startBtn} onClick={() => {
+              addXp(Math.floor(score / 50));
+              startGame();
+            }}>Play Again</button>
           </div>
-        </div>
+        )}
 
-        <div className={styles.rightColumn}>
-          <div className={styles.asteroidArea}>
-            <div className={styles.orbitContainer}>
-              <button 
-                className={styles.asteroidBtn} 
-                onClick={handleAsteroidClick}
-                onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-                onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-              >
-                <div className={styles.asteroidGraphic} />
-                
-                {floatingTexts.map(text => (
-                  <div 
-                    key={text.id} 
-                    className={styles.floatingText}
-                    style={{ left: text.x, top: text.y }}
-                  >
-                    +{text.value}
-                  </div>
-                ))}
-              </button>
+        {isPlaying && asteroid && (
+          <button
+            key={asteroid.id}
+            className={styles.asteroidBtn}
+            style={{ 
+              left: `${asteroid.x}%`, 
+              top: `${asteroid.y}%`, 
+              width: `${asteroid.size}px`, 
+              height: `${asteroid.size}px` 
+            }}
+            onPointerDown={handleAsteroidClick}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') handleAsteroidClick(e);
+            }}
+          >
+            <div className={styles.asteroidGraphic} />
+          </button>
+        )}
 
-              {/* Render visual orbiting drones (max 20 to save DOM) */}
-              {Array.from({ length: Math.min(miners, 20) }).map((_, i) => (
-                <div 
-                  key={i} 
-                  className={styles.orbitingDrone} 
-                  style={{ animationDelay: `${-(i * 0.5)}s` }}
-                />
-              ))}
-
-              {/* Render visual orbital stations */}
-              {Array.from({ length: Math.min(stations, 5) }).map((_, i) => (
-                <div 
-                  key={i} 
-                  className={styles.orbitingStation} 
-                  style={{ animationDelay: `${-(i * 1.5)}s` }}
-                >
-                  🛰️
-                </div>
-              ))}
-            </div>
-            
-            <p className={styles.instructionText}>Click the asteroid to mine!</p>
+        {particles.map(p => (
+          <div 
+            key={p.id}
+            className={`${styles.particle} ${p.xp ? styles.xpParticle : ''}`}
+            style={{ left: p.left, top: p.top }}
+          >
+            {p.xp ? '+10 (+1 XP)' : '+10'}
           </div>
-        </div>
+        ))}
       </div>
     </div>
   );
