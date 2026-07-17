@@ -29,10 +29,24 @@ class ErrorBoundary extends Component<Props, State> {
           <h2>Oops, there was an error loading the game.</h2>
           <p style={{ color: '#94a3b8', marginBottom: '20px' }}>This can happen if the app was updated recently.</p>
           <button 
-            onClick={() => window.location.reload()}
+            onClick={async () => {
+              try {
+                if ('serviceWorker' in navigator) {
+                  const regs = await navigator.serviceWorker.getRegistrations();
+                  for (const r of regs) await r.unregister();
+                }
+                if ('caches' in window) {
+                  const keys = await caches.keys();
+                  for (const k of keys) await caches.delete(k);
+                }
+              } catch (e) {
+                console.error(e);
+              }
+              window.location.href = window.location.origin + window.location.pathname + '?t=' + Date.now();
+            }}
             style={{ padding: '10px 20px', background: '#3b82f6', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer', fontWeight: 'bold' }}
           >
-            Reload Page
+            Clear Cache & Reload
           </button>
         </div>
       );

@@ -515,7 +515,7 @@ const MazeMuncher: React.FC = () => {
         <div className={styles.canvasContainer}>
           <canvas 
             ref={canvasRef} 
-            style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT }}
+            style={{ width: CANVAS_WIDTH, height: CANVAS_HEIGHT, maxWidth: '100%', aspectRatio: '1/1' }}
             className={styles.canvas}
           />
         </div>

@@ -203,25 +203,73 @@
 .hold { grid-column: 4; grid-row: 1; color: #a855f7; font-weight: bold; }
 
 @media (max-width: 768px) {
+  .gameContainer {
+    padding: 60px 10px 20px;
+    overflow-y: auto;
+  }
   .dpad {
     display: grid;
+    position: relative;
+    z-index: 10;
   }
   .playArea {
-    /* Stack side panels differently on mobile to prevent overflow */
-    flex-wrap: wrap;
-    max-height: 50vh; /* Prevent vertical overflow pushing dpad out */
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
   }
   .gridContainer {
-    min-width: 200px;
+    width: auto;
+    height: 55vh;
+    max-width: 100%;
+  }
+  .grid {
+    height: 100%;
+    width: auto;
   }
   .sidePanel {
-    order: 3; /* Move panels to bottom or side */
     flex-direction: row;
     width: 100%;
-    justify-content: space-around;
+    justify-content: center;
+    gap: 20px;
   }
   .box {
     flex-direction: row;
     min-height: auto;
+  }
+}
+
+
+/* === UNIVERSAL ULTRA-BOOST MOBILE FLEX STANDARD === */
+@media (max-width: 1024px) {
+  .gameContainer {
+    height: 100dvh !important;
+    min-height: 0 !important;
+    padding: 70px 10px 20px !important;
+    overflow: hidden !important;
+  }
+  .gameBoard {
+    height: 100% !important;
+    flex: 1 !important;
+    justify-content: space-between !important;
+    padding-bottom: 5px;
+  }
+  .canvasContainer, .gridContainer {
+    flex: 1 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    overflow: hidden !important;
+  }
+  .canvas, .grid {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+  .mobileControls, .dpad {
+    display: flex !important;
+    margin-top: auto !important;
   }
 }

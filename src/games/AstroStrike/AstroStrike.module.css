@@ -20,11 +20,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .header h2 {
   color: #fff;
-  font-size: 2rem;
+  font-size: clamp(1.5rem, 5vw, 2rem);
   margin: 0;
   text-shadow: 0 0 10px #f43f5e;
 }
@@ -32,12 +34,13 @@
 .stats {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .scoreBoard {
   color: #fbbf24;
-  font-size: 1.2rem;
-  padding: 8px 16px;
+  font-size: clamp(1rem, 3vw, 1.2rem);
+  padding: 8px clamp(8px, 2vw, 16px);
   background: rgba(251, 191, 36, 0.1);
   border: 1px solid rgba(251, 191, 36, 0.3);
   border-radius: 8px;
@@ -158,5 +161,41 @@
 @media (max-width: 1024px) {
   .mobileControls {
     display: flex;
+  }
+}
+
+
+/* === UNIVERSAL ULTRA-BOOST MOBILE FLEX STANDARD === */
+@media (max-width: 1024px) {
+  .gameContainer {
+    height: 100dvh !important;
+    min-height: 0 !important;
+    padding: 70px 10px 20px !important;
+    overflow: hidden !important;
+  }
+  .gameBoard {
+    height: 100% !important;
+    flex: 1 !important;
+    justify-content: space-between !important;
+    padding-bottom: 5px;
+  }
+  .canvasContainer, .gridContainer {
+    flex: 1 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    overflow: hidden !important;
+  }
+  .canvas, .grid {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+  .mobileControls, .dpad {
+    display: flex !important;
+    margin-top: auto !important;
   }
 }
